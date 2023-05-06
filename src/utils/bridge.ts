@@ -1,5 +1,5 @@
 import RustBridge from "rustlang-bridge";
-console.log("test");
+
 let bridge = new RustBridge("./rust-workers/target/release/rust-workers");
 
 bridge.rust_process.on("exit", () => {

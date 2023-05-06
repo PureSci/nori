@@ -13,10 +13,12 @@
   "dependencies": {
     "discord.js": "^14.11.0",
     "dotenv": "^16.0.3",
+    "lodash.merge": "^4.6.2",
     "mongoose": "^7.1.0",
     "rustlang-bridge": "^1.0.2"
   },
   "devDependencies": {
+    "@types/lodash.merge": "^4.6.7",
     "ts-node": "^10.9.1"
   }
 }
