@@ -1,0 +1,4 @@
+.env
+/node_modules
+/rust-workers/target
+nodemon.json
