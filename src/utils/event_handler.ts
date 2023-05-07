@@ -33,6 +33,7 @@ export default async function (client: Client) {
         body: register_commands
     });
     client.on("messageCreate", message => {
+        if (!message.guildId) return;
         if (message.author.id == Constants.SOFI_ID) {
             if (drop_analysis.filter(message)) {
                 return drop_analysis.run(message);
