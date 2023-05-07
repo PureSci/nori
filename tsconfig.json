@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "strict": true,
+        "moduleResolution": "node",
+        "importHelpers": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "removeComments": true,
+        "sourceMap": false,
+        "baseUrl": "./"
+    },
+    "files": [
+        "src/index.ts",
+        "src/rustlang-bridge.d.ts"
+    ],
+    "include": [
+        "./src/**/*",
+    ],
+    "exclude": [
+        "node_modules",
+    ],
+}
