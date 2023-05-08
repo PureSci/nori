@@ -1,6 +1,6 @@
 import { ChannelType, Message } from "discord.js";
-import { get_user_config } from "./database_handler";
-import constants from "./constants";
+import { get_user_config } from "./database_handler.js";
+import constants from "./constants.js";
 
 let reminder_type: {
     [key: string]: number
@@ -26,7 +26,7 @@ export default (message: Message, user_id: string, type: string) => {
                 let is_dm = reminder_config.data == "dm";
                 if (is_dm) send_channel = message.author;
                 let is_dm_msg = is_dm ? ` <#${message.channelId}>` : "";
-                send_channel.send(`${constants.REMINDER_EMOJI} You can now **${type}**!${is_dm_msg}`);
+                send_channel.send(`${constants.REMINDER_EMOJI} <@${user_id}> You can now **${type}**!${is_dm_msg}`);
             }
         } catch (err) { }
     }, reminder_type[type]);

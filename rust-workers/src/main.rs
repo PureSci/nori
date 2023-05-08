@@ -14,6 +14,7 @@ async fn main() {
     let (drop_sender, drop_receiver) = mpsc::channel(1);
     let (card_sender, card_receiver) = mpsc::channel(1);
     bridge.register_async("ocr_drop", ocr_drop, Some(drop_sender));
+    bridge.register_async("find_cards", find_cards, Some(card_sender.clone()));
     tokio::spawn(card_handler_loop(card_receiver, bridge.clone()));
     tokio::spawn(update_card_loop(card_sender.clone(), bridge.clone()));
     tokio::spawn(drop_ocr_loop(drop_receiver, bridge.clone(), card_sender));
@@ -53,4 +54,15 @@ async fn update_card_loop(sender: Sender<CardsHandleType>, bridge: NodeBridge) {
             .unwrap();
     }
     bridge.close().await;
+}
+
+async fn find_cards(params: Vec<String>, sender: Option<Sender<CardsHandleType>>) -> String {
+    let characters: Vec<Character> = serde_json::from_str(params[0].as_str()).unwrap();
+    let (return_sender, return_receiver) = oneshot::channel();
+    sender
+        .unwrap()
+        .send(CardsHandleType::FindCard(characters, return_sender))
+        .await
+        .unwrap();
+    return_receiver.await.unwrap()
 }
