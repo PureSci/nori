@@ -17,5 +17,29 @@ export async function run(message: Message, args: string[]) {
             }
             message.content = `<@${message.author.id}> is dropping the cards`;
             drop_run(message, attachment);
+            break;
+        case "dropn":
+            message.channel.send({
+                content: `<@${message.author.id}> is dropping the cards`,
+                embeds: [{
+                    title: "SOFI: DROP",
+                    fields: [{
+                        name: "Gen 752",
+                        value: `\`\`\`\nMae\n\nFire Emblem Echoe-\n\`\`\``,
+                        inline: true
+                    }, {
+                        name: "Gen 245",
+                        value: `\`\`\`\nHana Odagiri\n\nThe Anthem of the-\n\`\`\``,
+                        inline: true
+                    }, {
+                        name: "Gen 1321",
+                        value: `\`\`\`\nYamamoto\n\nGolden Kamuy\n\`\`\``,
+                        inline: true
+                    }],
+                    color: 14133492
+                }],
+            }).then(m => {
+                drop_run(m);
+            });
     }
 }

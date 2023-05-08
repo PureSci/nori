@@ -68,13 +68,13 @@ pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, bridge: 
                     .collect::<Vec<Character>>();
                 let mut return_str = "[".to_string();
                 for item in found.iter().take(3) {
-                    let wl = match item.wl {
+                    let wl = match &item.wl {
                         Some(wishlist) => wishlist.to_string(),
-                        None => "null".to_string(),
+                        None => "?".to_string(),
                     };
                     let gen = item.gen.as_ref().unwrap();
                     return_str.push_str(&format!(
-                        r#"{{"name":"{}", "series": "{}","wl": {}, "gen": {}}},"#,
+                        r#"{{"name":"{}", "series": "{}","wl": "{}", "gen": "{}"}},"#,
                         item.name, item.series, wl, gen
                     ));
                 }
@@ -137,7 +137,7 @@ fn format_string(mut string: String) -> (bool, String) {
         string += ".";
     }
     let is_dot = string.ends_with("...");
-    (is_dot, string.replace("...", ""))
+    (is_dot, string.replace("...", "").to_ascii_lowercase())
 }
 
 fn format_string_lite(string: &str) -> (bool, String) {

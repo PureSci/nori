@@ -22,8 +22,8 @@ let server_config_object: any = {
         format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}\n{copy1?3}" }
     },
     reminders: {
-        480000: { type: Boolean, default: true },
-        240000: { type: Boolean, default: false }
+        drop: { type: Boolean, default: true },
+        grab: { type: Boolean, default: false }
     }
 };
 

@@ -20,7 +20,8 @@ declare module 'rustlang-bridge' {
         prependOnceListener(eventName: string | symbol, listener: (...args: any[]) => void): this;
         eventNames(): (string | symbol)[];
         public ocr_drop(url: string): Promise<string>;
-        public rust_process: ChildProcess
+        public find_cards(cards: string): Promise<string>;
+        public rust_process: ChildProcess;
         public close(): boolean;
     }
 }
