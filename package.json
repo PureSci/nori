@@ -1,6 +1,6 @@
 {
-  "name": "norikoshi",
-  "version": "1.0.0",
+  "name": "ogonori",
+  "version": "0.0.3",
   "description": "",
   "main": "src/index.ts",
   "type": "module",
