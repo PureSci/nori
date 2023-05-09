@@ -21,6 +21,7 @@ declare module 'rustlang-bridge' {
         eventNames(): (string | symbol)[];
         public ocr_drop(url: string): Promise<string>;
         public find_cards(cards: string): Promise<string>;
+        public ocr_captcha(url: string): Promise<string>;
         public rust_process: ChildProcess;
         public close(): boolean;
     }

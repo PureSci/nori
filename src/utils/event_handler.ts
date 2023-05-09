@@ -18,9 +18,9 @@ export default async function (client: Client) {
         };
     }));
     let register_commands: string[] = [];
-    let command_files = fs.readdirSync("./src/commands/");
+    let command_files = fs.readdirSync("./src/interactions/commands/");
     let commands = await Promise.all(command_files.map(async file => {
-        let command = await import(`../commands/${file}`);
+        let command = await import(`../interactions/commands/${file}`);
         if (command.register) {
             register_commands.push(command.register.toJSON());
         }
@@ -35,7 +35,7 @@ export default async function (client: Client) {
     client.on("messageCreate", message => {
         if (!message.guildId) return;
         if (message.author.id == Constants.SOFI_ID) {
-            if (drop_analysis.filter(message)) {
+            if (settings.features.includes("drop_analysis") && drop_analysis.filter(message)) {
                 return drop_analysis.run(message);
             }
             operations.forEach(async operation => {

@@ -24,6 +24,12 @@ let server_config_object: any = {
     reminders: {
         drop: { type: Boolean, default: true },
         grab: { type: Boolean, default: false }
+    },
+    server_drops: {
+        captcha: {
+            enabled: { type: Boolean, default: true },
+            format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}" }
+        }
     }
 };
 

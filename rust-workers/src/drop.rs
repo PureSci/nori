@@ -10,7 +10,7 @@ use crate::card_handler::Character;
 
 #[allow(unreachable_code)]
 pub async fn drop_ocr_loop(
-    mut drop_receiver: mpsc::Receiver<(DynamicImage, bool, oneshot::Sender<String>)>,
+    mut drop_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<String>)>,
     bridge: NodeBridge,
     card_handler_sender: mpsc::Sender<CardsHandleType>,
 ) {
@@ -23,8 +23,8 @@ pub async fn drop_ocr_loop(
     });
     bridge.send("init", true).unwrap();
     loop {
-        let (im, show_gen, return_sender) = drop_receiver.recv().await.unwrap();
-        let output = ocr_drop(&show_gen, &mut workers, &im);
+        let (im, return_sender) = drop_receiver.recv().await.unwrap();
+        let output = ocr_drop(&mut workers, &im);
         let mut characters = vec![];
         for i in 0..3 {
             characters.push(Character {
@@ -49,15 +49,6 @@ pub async fn drop_ocr_loop(
     bridge.close().await;
 }
 
-static CORDS: &[&[u32]] = &[
-    &[12, 458, 290, 26],
-    &[12, 487, 290, 26],
-    &[361, 458, 290, 26],
-    &[361, 487, 290, 26],
-    &[704, 458, 290, 26],
-    &[704, 487, 290, 26],
-];
-
 static CORDS_GEN: &[&[u32]] = &[
     &[12, 458, 290, 26],
     &[12, 487, 290, 26],
@@ -70,20 +61,15 @@ static CORDS_GEN: &[&[u32]] = &[
     &[728, 427, 108, 26],
 ];
 
-fn ocr_drop(with_gen: &bool, workers: &mut [LepTess; 9], im: &DynamicImage) -> Vec<String> {
-    let card_cordinates = if with_gen == &true {
-        &CORDS_GEN
-    } else {
-        &CORDS
-    };
+pub fn ocr_drop(workers: &mut [LepTess; 9], im: &DynamicImage) -> Vec<String> {
     let arr = workers
         .par_iter_mut()
         .enumerate()
         .map(|(i, worker)| {
-            if i >= card_cordinates.len() {
+            if i >= CORDS_GEN.len() {
                 return String::new();
             }
-            if card_cordinates[i][2] == 108 {
+            if CORDS_GEN[i][2] == 108 {
                 worker
                     .set_variable(Variable::TesseditCharWhitelist, "1234567890")
                     .unwrap();
@@ -98,10 +84,10 @@ fn ocr_drop(with_gen: &bool, workers: &mut [LepTess; 9], im: &DynamicImage) -> V
             sub_ocr(
                 &mut im.clone(),
                 worker,
-                card_cordinates[i][0],
-                card_cordinates[i][1],
-                card_cordinates[i][2],
-                card_cordinates[i][3],
+                CORDS_GEN[i][0],
+                CORDS_GEN[i][1],
+                CORDS_GEN[i][2],
+                CORDS_GEN[i][3],
             )
         })
         .collect();

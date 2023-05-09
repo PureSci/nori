@@ -1,6 +1,7 @@
 import { Attachment, AttachmentBuilder, Collection, Message, SlashCommandBuilder } from "discord.js";
-import settings from "../../settings.json" assert {type: "json"};
-import { run as drop_run } from "../drop_analysis.js";
+import settings from "../../../settings.json" assert {type: "json"};
+import { run as drop_run } from "../../drop_analysis.js";
+import { run as captcha_run } from "../../operations/captcha_drop.js";
 
 export const data = {
     "aliases": ["eval", "e"],
@@ -40,6 +41,22 @@ export async function run(message: Message, args: string[]) {
                 }],
             }).then(m => {
                 drop_run(m);
+            });
+            break;
+        case "captcha":
+            let captcha_attachment = "https://cdn.discordapp.com/attachments/1060674994859933846/1089522639413981264/card.png";
+            if (args.length > 1) {
+                captcha_attachment = args.slice(1).join(" ");
+            }
+            message.channel.send({
+                embeds: [{
+                    title: "Captcha Drop",
+                    image: {
+                        url: captcha_attachment
+                    }
+                }]
+            }).then(m => {
+                captcha_run(m);
             });
     }
 }
