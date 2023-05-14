@@ -17,7 +17,7 @@ export function capitalize_first(text: string) {
     return capitalized.join(" ");
 }
 
-export function fetch_format(format: string, ocr_output: CardData[]) {
+export function fetch_format(format: string, ocr_output: Partial<CardData>[]) {
     let rows = format.split("\n");
     if (rows.length !== 1) {
         if (rows.some(x => x.startsWith("{copy"))) {
@@ -31,10 +31,18 @@ export function fetch_format(format: string, ocr_output: CardData[]) {
         }
     }
     ocr_output.forEach((card, index) => {
-        format = format.replaceAll(`{wl${index + 1}}`, set_spacing(card.wl, 4))
-            .replaceAll(`{gen${index + 1}}`, set_spacing(card.gen, 4))
-            .replaceAll(`{cardname${index + 1}}`, capitalize_first(card.name))
-            .replaceAll(`{cardseries${index + 1}}`, capitalize_first(card.series));
+        if (card.wl) {
+            format = format.replaceAll(`{wl${index + 1}}`, set_spacing(card.wl, 4));
+        }
+        if (card.gen) {
+            format = format.replaceAll(`{gen${index + 1}}`, set_spacing(card.gen, 4));
+        }
+        if (card.name) {
+            format = format.replaceAll(`{cardname${index + 1}}`, capitalize_first(card.name));
+        }
+        if (card.series) {
+            format = format.replaceAll(`{cardseries${index + 1}}`, capitalize_first(card.series));
+        }
     });
     return format;
 }

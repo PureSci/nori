@@ -29,6 +29,16 @@ let server_config_object: any = {
         captcha: {
             enabled: { type: Boolean, default: true },
             format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}" }
+        },
+        series: {
+            one: {
+                enabled: { type: Boolean, default: true },
+                format: { type: String, default: "`1]` • :heart: `{wl1}` • {cardseries1}\n{copy1?2}\n{copy1?3}" }
+            },
+            /*second: {
+                enabled: {type: Boolean, default: true},
+                format: {type: String, default:}
+            }*/
         }
     }
 };

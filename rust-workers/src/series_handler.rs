@@ -77,10 +77,10 @@ pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridg
                 for item in found.iter().take(3) {
                     let wl = match &item.wl {
                         Some(wishlist) => wishlist.to_string(),
-                        None => "?".to_string(),
+                        None => "0".to_string(),
                     };
                     return_str
-                        .push_str(&format!(r#"{{"name":"{}", "wl": "{}"}},"#, item.name, wl,));
+                        .push_str(&format!(r#"{{"series":"{}", "wl": "{}"}},"#, item.name, wl,));
                 }
                 return_str.pop();
                 return_str.push(']');

@@ -2,6 +2,7 @@ import { Attachment, AttachmentBuilder, Collection, Message, SlashCommandBuilder
 import settings from "../../../settings.json" assert {type: "json"};
 import { run as drop_run } from "../../drop_analysis.js";
 import { run as captcha_run } from "../../operations/captcha_drop.js";
+import { run as seriesone_run } from "../../operations/series_one.js";
 
 export const data = {
     "aliases": ["eval", "e"],
@@ -58,5 +59,18 @@ export async function run(message: Message, args: string[]) {
             }).then(m => {
                 captcha_run(m);
             });
+            break;
+        case "seriesone":
+            message.channel.send({
+                embeds: [{
+                    description: `**I will drop cards from the most voted series :smugsofi:
+                    1] Soul Eater NOT!
+                    2] Cross Game
+                    3] Terra Formars: Revenge
+                    `
+                }]
+            }).then(m => {
+                seriesone_run(m);
+            })
     }
 }
