@@ -1,0 +1,6 @@
+{
+    "name": "rust-workers",
+    "napi": {
+        "name": "rust-workers"
+    }
+}

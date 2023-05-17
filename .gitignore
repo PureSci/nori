@@ -2,3 +2,5 @@
 /node_modules
 /rust-workers/target
 nodemon.json
+/rust-workers/rust-workers.node
+/rust-workers/rust-workers.d.ts

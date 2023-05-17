@@ -1,10 +1,7 @@
-import RustBridge from "rustlang-bridge";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { RustBridge } = require("../../rust-workers/rust-workers.node");
 
-let bridge = new RustBridge("./rust-workers/target/release/rust-workers");
-
-bridge.rust_process.on("exit", () => {
-    bridge = new RustBridge("./rust-workers/target/release/rust-workers");
-    console.log("Rust thread panicked.");
-});
+let bridge = new RustBridge();
 
 export default bridge;

@@ -1,8 +1,8 @@
 import { Attachment, AttachmentBuilder, Collection, Message, SlashCommandBuilder } from "discord.js";
 import settings from "../../../settings.json" assert {type: "json"};
-import { run as drop_run } from "../../drop_analysis.js";
-import { run as captcha_run } from "../../operations/captcha_drop.js";
-import { run as seriesone_run } from "../../operations/series_one.js";
+import { run as dropRun } from "../../dropAnalysis.js";
+import { run as captchaRun } from "../../operations/captchaDrop.js";
+import { run as seriesOneRun } from "../../operations/seriesOne.js";
 
 export const data = {
     "aliases": ["eval", "e"],
@@ -18,7 +18,7 @@ export async function run(message: Message, args: string[]) {
                 attachment = args.slice(1).join(" ");
             }
             message.content = `<@${message.author.id}> is dropping the cards`;
-            drop_run(message, attachment);
+            dropRun(message, attachment);
             break;
         case "dropn":
             message.channel.send({
@@ -41,23 +41,23 @@ export async function run(message: Message, args: string[]) {
                     color: 14133492
                 }],
             }).then(m => {
-                drop_run(m);
+                dropRun(m);
             });
             break;
         case "captcha":
-            let captcha_attachment = "https://cdn.discordapp.com/attachments/1060674994859933846/1089522639413981264/card.png";
+            let captchaAttachment = "https://cdn.discordapp.com/attachments/1060674994859933846/1089522639413981264/card.png";
             if (args.length > 1) {
-                captcha_attachment = args.slice(1).join(" ");
+                captchaAttachment = args.slice(1).join(" ");
             }
             message.channel.send({
                 embeds: [{
                     title: "Captcha Drop",
                     image: {
-                        url: captcha_attachment
+                        url: captchaAttachment
                     }
                 }]
             }).then(m => {
-                captcha_run(m);
+                captchaRun(m);
             });
             break;
         case "seriesone":
@@ -70,7 +70,7 @@ export async function run(message: Message, args: string[]) {
                     `
                 }]
             }).then(m => {
-                seriesone_run(m);
+                seriesOneRun(m);
             })
     }
 }

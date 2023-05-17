@@ -1,8 +1,8 @@
 use image::{imageops, DynamicImage, GenericImage, ImageBuffer, ImageOutputFormat, Luma};
 use leptess::{LepTess, Variable};
-use node_bridge::NodeBridge;
 use rayon::prelude::*;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 
 use crate::card_handler::CardsHandleType;
@@ -10,8 +10,8 @@ use crate::card_handler::Character;
 
 #[allow(unreachable_code)]
 pub async fn drop_ocr_loop(
-    mut drop_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<String>)>,
-    bridge: NodeBridge,
+    mut drop_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
+    init_sender: Sender<bool>,
     card_handler_sender: mpsc::Sender<CardsHandleType>,
 ) {
     let mut workers: [_; 9] = std::array::from_fn(|_| {
@@ -21,7 +21,7 @@ pub async fn drop_ocr_loop(
             .unwrap();
         worker
     });
-    bridge.send("init", true).unwrap();
+    init_sender.send(true).await.unwrap();
     loop {
         let (im, return_sender) = drop_receiver.recv().await.unwrap();
         let output = ocr_drop(&mut workers, &im);
@@ -46,7 +46,6 @@ pub async fn drop_ocr_loop(
                 .await
         });
     }
-    bridge.close().await;
 }
 
 static CORDS_GEN: &[&[u32]] = &[

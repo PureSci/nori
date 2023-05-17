@@ -4,14 +4,14 @@ use crate::drop::sub_ocr;
 use image::DynamicImage;
 use leptess::LepTess;
 use leptess::Variable;
-use node_bridge::NodeBridge;
 use rayon::prelude::*;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 
 pub async fn captcha_ocr_loop(
-    mut captcha_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<String>)>,
-    bridge: NodeBridge,
+    mut captcha_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
+    init_sender: Sender<bool>,
     card_handler_sender: mpsc::Sender<CardsHandleType>,
 ) {
     let mut workers: [_; 3] = std::array::from_fn(|_| {
@@ -21,7 +21,7 @@ pub async fn captcha_ocr_loop(
             .unwrap();
         worker
     });
-    bridge.send("init", true).unwrap();
+    init_sender.send(true).await.unwrap();
     loop {
         let (im, return_sender) = captcha_receiver.recv().await.unwrap();
         let output = ocr_captcha(&mut workers, &im);

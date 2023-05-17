@@ -1,14 +1,15 @@
 use mongodb::bson::{doc, Document};
 use mongodb::options::{ClientOptions, UpdateOptions};
 use mongodb::{Client, Database};
-use node_bridge::NodeBridge;
+use napi_derive::napi;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[napi(object)]
 pub struct Character {
     pub name: String,
     pub series: String,
@@ -18,12 +19,12 @@ pub struct Character {
 
 #[derive(Debug)]
 pub enum CardsHandleType {
-    FindCard(Vec<Character>, oneshot::Sender<String>),
+    FindCard(Vec<Character>, oneshot::Sender<Vec<Character>>),
     UpdateCard(Character),
 }
 
 #[allow(unreachable_code)]
-pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, bridge: NodeBridge) {
+pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, init_sender: Sender<bool>) {
     let db_url = std::env::var("MONGODB_URL").unwrap();
     let db = Client::with_options(ClientOptions::parse(db_url.clone()).await.unwrap())
         .unwrap()
@@ -43,7 +44,7 @@ pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, bridge: 
         let character = cursor.deserialize_current().unwrap();
         characters.push(character);
     }
-    bridge.send("init", true).unwrap();
+    init_sender.send(true).await.unwrap();
     loop {
         match receiver.recv().await.unwrap() {
             CardsHandleType::FindCard(cards, return_sender) => {
@@ -66,21 +67,7 @@ pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, bridge: 
                         }
                     })
                     .collect::<Vec<Character>>();
-                let mut return_str = "[".to_string();
-                for item in found.iter().take(3) {
-                    let wl = match &item.wl {
-                        Some(wishlist) => wishlist.to_string(),
-                        None => "?".to_string(),
-                    };
-                    let gen = item.gen.as_ref().unwrap();
-                    return_str.push_str(&format!(
-                        r#"{{"name":"{}", "series": "{}","wl": "{}", "gen": "{}"}},"#,
-                        item.name, item.series, wl, gen
-                    ));
-                }
-                return_str.pop();
-                return_str.push(']');
-                return_sender.send(return_str).unwrap();
+                return_sender.send(found).unwrap();
             }
             CardsHandleType::UpdateCard(card) => {
                 let (is_dot_name, card_name) = format_string_lite(&card.name);
@@ -103,7 +90,6 @@ pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, bridge: 
             }
         }
     }
-    bridge.close().await;
 }
 
 async fn update_card(database: Database, card: Character) {

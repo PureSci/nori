@@ -1,11 +1,11 @@
 {
-    "db_url": "mongodb://localhost:27017/ogonoridev",
+    "dbUrl": "mongodb://localhost:27017/ogonoridev",
     "prefix": "n",
     "developers": [
         "353623899184824330"
     ],
     "features": [
         "developer",
-        "drop_analysis"
+        "dropAnalysis"
     ]
 }

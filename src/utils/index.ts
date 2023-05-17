@@ -1,15 +1,17 @@
-import { CardData } from "src/drop_analysis";
+import { Character, Series } from "../../rust-workers/rust-workers";
 
-export function set_spacing(text: string | number, spacing: number) {
+export function setSpacing(text: string | number | undefined, spacing: number) {
+    if (text == undefined) text = "?";
     if (typeof text == "number") text = text.toString();
-    let for_length = spacing - text.length;
-    for (let i = 0; i < for_length; i++) {
+    let forLength = spacing - text.length;
+    for (let i = 0; i < forLength; i++) {
         text += " ";
     }
     return text;
 }
 
-export function capitalize_first(text: string) {
+export function capitalizeFirst(text: string | (null | undefined)) {
+    if (!text) return "";
     let capitalized: string[] = [];
     text.split(" ").forEach(part => {
         capitalized.push(part.charAt(0).toUpperCase() + part.slice(1));
@@ -17,31 +19,25 @@ export function capitalize_first(text: string) {
     return capitalized.join(" ");
 }
 
-export function fetch_format(format: string, ocr_output: Partial<CardData>[]) {
+export function fetchFormat(format: string, ocrOutput: (Character | Series)[]) {
     let rows = format.split("\n");
     if (rows.length !== 1) {
         if (rows.some(x => x.startsWith("{copy"))) {
-            let first_row = rows[0];
+            let firstRow = rows[0];
             rows.shift();
-            format = first_row;
+            format = firstRow;
             rows.forEach(row => {
-                let search_and_replace_value = row.split("{copy")[1].split("}")[0].split("?");
-                format += "\n" + first_row.replaceAll(search_and_replace_value[0], search_and_replace_value[1]);
+                let searchAndReplaceValue = row.split("{copy")[1].split("}")[0].split("?");
+                format += "\n" + firstRow.replaceAll(searchAndReplaceValue[0], searchAndReplaceValue[1]);
             });
         }
     }
-    ocr_output.forEach((card, index) => {
-        if (card.wl) {
-            format = format.replaceAll(`{wl${index + 1}}`, set_spacing(card.wl, 4));
-        }
-        if (card.gen) {
-            format = format.replaceAll(`{gen${index + 1}}`, set_spacing(card.gen, 4));
-        }
-        if (card.name) {
-            format = format.replaceAll(`{cardname${index + 1}}`, capitalize_first(card.name));
-        }
-        if (card.series) {
-            format = format.replaceAll(`{cardseries${index + 1}}`, capitalize_first(card.series));
+    ocrOutput.forEach((card, index) => {
+        format = format.replaceAll(`{cardseries${index + 1}}`, capitalizeFirst(card.series))
+            .replaceAll(`{wl${index + 1}}`, setSpacing(card.wl, 4));
+        if ("name" in card) {
+            format = format.replaceAll(`{cardname${index + 1}}`, capitalizeFirst(card.name))
+                .replaceAll(`{gen${index + 1}}`, setSpacing(card.gen, 4));
         }
     });
     return format;

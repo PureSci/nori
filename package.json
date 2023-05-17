@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "node --loader ts-node/esm ./src/index.ts"
+    "start": "node --loader ts-node/esm ./src/index.ts",
+    "build": "cd rust-workers && napi build --release --dts rust-workers.d.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +15,7 @@
     "discord.js": "^14.11.0",
     "dotenv": "^16.0.3",
     "lodash.merge": "^4.6.2",
-    "mongoose": "^7.1.0",
-    "rustlang-bridge": "^1.0.2"
+    "mongoose": "^7.1.0"
   },
   "devDependencies": {
     "@types/lodash.merge": "^4.6.7",

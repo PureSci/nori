@@ -3,26 +3,33 @@ use mongodb::{
     options::{ClientOptions, UpdateOptions},
     Client, Database,
 };
-use node_bridge::NodeBridge;
+use napi_derive::napi;
 use rayon::prelude::*;
-use tokio::sync::{mpsc::Receiver, oneshot};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    oneshot,
+};
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[napi(object)]
 pub struct Series {
-    pub name: String,
+    pub series: String,
     pub wl: Option<u32>,
 }
 
 #[derive(Debug)]
 pub enum SeriesHandleType {
-    FindSeries(Vec<Series>, oneshot::Sender<String>),
+    FindSeries(Vec<Series>, oneshot::Sender<Vec<Series>>),
     UpdateSeries(Series),
 }
 
 #[allow(unreachable_code)]
-pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridge: NodeBridge) {
+pub async fn series_handler_loop(
+    mut receiver: Receiver<SeriesHandleType>,
+    init_sender: Sender<bool>,
+) {
     let db_url = std::env::var("MONGODB_URL").unwrap();
     let db = Client::with_options(ClientOptions::parse(db_url.clone()).await.unwrap())
         .unwrap()
@@ -41,7 +48,7 @@ pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridg
     while cursor.advance().await.unwrap() {
         series.push(cursor.deserialize_current().unwrap());
     }
-    bridge.send("init", true).unwrap();
+    init_sender.send(true).await.unwrap();
     loop {
         //let (cards, return_sender) = receiver.recv().await.unwrap();
         match receiver.recv().await.unwrap() {
@@ -49,23 +56,23 @@ pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridg
                 let found = (0..3)
                     .into_par_iter()
                     .map(|i| {
-                        let card = &cards[i].name;
+                        let card = &cards[i].series;
                         //card.retain(|c| !c.is_whitespace());
                         let is_dot_card = card.ends_with("...");
                         match series.par_iter().find_any(|serie| {
-                            let is_dot_serie = serie.name.ends_with("...");
+                            let is_dot_serie = serie.series.ends_with("...");
                             if is_dot_serie && is_dot_card {
-                                if serie.name.len() > card.len() {
-                                    return serie.name.starts_with(card);
+                                if serie.series.len() > card.len() {
+                                    return serie.series.starts_with(card);
                                 } else {
-                                    return card.starts_with(&serie.name);
+                                    return card.starts_with(&serie.series);
                                 }
                             } else if is_dot_serie && !is_dot_card {
-                                return card.starts_with(&serie.name);
+                                return card.starts_with(&serie.series);
                             } else if (!is_dot_serie) && is_dot_card {
-                                return serie.name.starts_with(card);
+                                return serie.series.starts_with(card);
                             } else {
-                                return &serie.name == card;
+                                return &serie.series == card;
                             }
                         }) {
                             None => cards[i].clone(),
@@ -73,36 +80,25 @@ pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridg
                         }
                     })
                     .collect::<Vec<Series>>();
-                let mut return_str = "[".to_string();
-                for item in found.iter().take(3) {
-                    let wl = match &item.wl {
-                        Some(wishlist) => wishlist.to_string(),
-                        None => "0".to_string(),
-                    };
-                    return_str
-                        .push_str(&format!(r#"{{"series":"{}", "wl": "{}"}},"#, item.name, wl,));
-                }
-                return_str.pop();
-                return_str.push(']');
-                return_sender.send(return_str).unwrap();
+                return_sender.send(found).unwrap();
             }
             SeriesHandleType::UpdateSeries(cardo) => {
-                let card = &cardo.name;
+                let card = &cardo.series;
                 let is_dot_card = card.ends_with("...");
                 match series.par_iter_mut().find_any(|serie| {
-                    let is_dot_serie = serie.name.ends_with("...");
+                    let is_dot_serie = serie.series.ends_with("...");
                     if is_dot_serie && is_dot_card {
-                        if serie.name.len() > card.len() {
-                            return serie.name.starts_with(card);
+                        if serie.series.len() > card.len() {
+                            return serie.series.starts_with(card);
                         } else {
-                            return card.starts_with(&serie.name);
+                            return card.starts_with(&serie.series);
                         }
                     } else if is_dot_serie && !is_dot_card {
-                        return card.starts_with(&serie.name);
+                        return card.starts_with(&serie.series);
                     } else if (!is_dot_serie) && is_dot_card {
-                        return serie.name.starts_with(card);
+                        return serie.series.starts_with(card);
                     } else {
-                        return &serie.name == card;
+                        return &serie.series == card;
                     }
                 }) {
                     None => {
@@ -119,7 +115,6 @@ pub async fn series_handler_loop(mut receiver: Receiver<SeriesHandleType>, bridg
             }
         }
     }
-    bridge.close().await;
 }
 
 async fn update_series(database: Database, card: Series) {
@@ -127,7 +122,7 @@ async fn update_series(database: Database, card: Series) {
         .collection::<Document>("analysis_series")
         .update_one(
             doc! {
-                "name": &card.name
+                "name": &card.series
             },
             doc! {
                 "$set": {
