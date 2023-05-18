@@ -4,6 +4,7 @@ import { run as dropRun } from "../../dropAnalysis.js";
 import { run as captchaRun } from "../../operations/captchaDrop.js";
 import { run as seriesOneRun } from "../../operations/seriesOne.js";
 import { run as seriesTwoRun } from "../../operations/seriesTwo.js";
+import { run as minigameRun } from "../../operations/minigame.js";
 
 export const data = {
     "aliases": ["eval", "e"],
@@ -70,6 +71,13 @@ export async function run(message: Message, args: string[]) {
             message.channel.send({
                 files: [seriesTwoAttachment]
             }).then(m => seriesTwoRun(m));
+            break;
+        case "minigame":
+            message.channel.send({
+                embeds: [{
+                    description: "**Mike** *(Subway Surfers)* **| :woodw: Wood**"
+                }]
+            }).then(m => minigameRun(m));
             break;
     }
 }

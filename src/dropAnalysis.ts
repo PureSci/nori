@@ -5,7 +5,7 @@ import reminderHandler from "./utils/reminderHandler.js";
 import { fetchFormat } from "./utils/index.js";
 import { Character } from "../rust-workers/rust-workers.js";
 export function filter(message: Message): boolean {
-    return message.content.endsWith("is dropping the cards") || message.content == "Your extra drop is being used.";
+    return message.content.endsWith("is dropping the cards") || message.content.includes("Your extra drop is being used.");
 }
 
 export async function run(message: Message, url?: string) {

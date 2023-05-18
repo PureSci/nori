@@ -39,6 +39,10 @@ const serverConfigObject = {
                 enabled: { type: Boolean, default: true },
                 format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}" }
             }
+        },
+        minigame: {
+            enabled: { type: Boolean, default: true },
+            format: { type: String, default: "`1]` • :heart: `{wl1}` • **{cardname1}** • {cardseries1}" }
         }
     }
 };
