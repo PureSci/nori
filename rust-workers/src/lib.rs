@@ -1,9 +1,10 @@
 use captcha::captcha_ocr_loop;
 use card_handler::{card_handler_loop, CardsHandleType, Character};
 use drop::drop_ocr_loop;
-use image::{DynamicImage, ImageFormat};
+use image::DynamicImage;
 use napi_derive::napi;
 use series_handler::{series_handler_loop, Series, SeriesHandleType};
+use series_ocr::series_ocr_loop;
 use tokio;
 use tokio::sync::mpsc;
 mod drop;
@@ -12,6 +13,7 @@ use tokio::sync::oneshot;
 mod captcha;
 mod card_handler;
 mod series_handler;
+mod series_ocr;
 
 #[napi]
 pub struct RustBridge {
@@ -19,6 +21,7 @@ pub struct RustBridge {
     captcha_sender: Sender<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
     card_sender: Sender<CardsHandleType>,
     series_sender: Sender<SeriesHandleType>,
+    series_ocr_sender: Sender<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
 }
 
 #[napi]
@@ -30,6 +33,7 @@ impl RustBridge {
         let (card_sender, card_receiver) = mpsc::channel(1);
         let (series_sender, series_receiver) = mpsc::channel(1);
         let (init_sender, mut init_receiver) = mpsc::channel(1);
+        let (series_ocr_sender, series_ocr_receiver) = mpsc::channel(1);
         tokio::spawn(card_handler_loop(card_receiver, init_sender.clone()));
         tokio::spawn(series_handler_loop(series_receiver, init_sender.clone()));
         tokio::spawn(drop_ocr_loop(
@@ -39,10 +43,15 @@ impl RustBridge {
         ));
         tokio::spawn(captcha_ocr_loop(
             captcha_receiver,
+            init_sender.clone(),
+            card_sender.clone(),
+        ));
+        tokio::spawn(series_ocr_loop(
+            series_ocr_receiver,
             init_sender,
             card_sender.clone(),
         ));
-        for _ in 0..4 {
+        for _ in 0..5 {
             init_receiver.blocking_recv();
         }
         RustBridge {
@@ -50,27 +59,18 @@ impl RustBridge {
             captcha_sender,
             card_sender,
             series_sender,
+            series_ocr_sender,
         }
     }
 
     #[napi]
     pub async fn ocr_drop(&self, url: String) -> Vec<Character> {
-        let (return_sender, return_receiver) = oneshot::channel();
-        let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
-        let im = image::load_from_memory_with_format(&bytes, ImageFormat::WebP).unwrap();
-        drop(bytes);
-        self.drop_sender.send((im, return_sender)).await.unwrap();
-        return_receiver.await.unwrap()
+        download_and_ocr(&self.drop_sender, url).await
     }
 
     #[napi]
     pub async fn ocr_captcha(&self, url: String) -> Vec<Character> {
-        let (return_sender, return_receiver) = oneshot::channel();
-        let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
-        let im = image::load_from_memory(&bytes).unwrap();
-        drop(bytes);
-        self.captcha_sender.send((im, return_sender)).await.unwrap();
-        return_receiver.await.unwrap()
+        download_and_ocr(&self.captcha_sender, url).await
     }
 
     #[napi]
@@ -108,4 +108,21 @@ impl RustBridge {
             .await
             .unwrap();
     }
+
+    #[napi]
+    pub async fn ocr_series(&self, url: String) -> Vec<Character> {
+        download_and_ocr(&self.series_ocr_sender, url).await
+    }
+}
+
+async fn download_and_ocr(
+    sender: &Sender<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
+    url: String,
+) -> Vec<Character> {
+    let (return_sender, return_receiver) = oneshot::channel();
+    let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
+    let im = image::load_from_memory(&bytes).unwrap();
+    drop(bytes);
+    sender.send((im, return_sender)).await.unwrap();
+    return_receiver.await.unwrap()
 }

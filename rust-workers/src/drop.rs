@@ -8,46 +8,6 @@ use tokio::sync::oneshot;
 use crate::card_handler::CardsHandleType;
 use crate::card_handler::Character;
 
-#[allow(unreachable_code)]
-pub async fn drop_ocr_loop(
-    mut drop_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
-    init_sender: Sender<bool>,
-    card_handler_sender: mpsc::Sender<CardsHandleType>,
-) {
-    let mut workers: [_; 9] = std::array::from_fn(|_| {
-        let mut worker = LepTess::new(None, "eng").unwrap();
-        worker
-            .set_variable(Variable::TesseditPagesegMode, "7")
-            .unwrap();
-        worker
-    });
-    init_sender.send(true).await.unwrap();
-    loop {
-        let (im, return_sender) = drop_receiver.recv().await.unwrap();
-        let output = ocr_drop(&mut workers, &im);
-        let mut characters = vec![];
-        for i in 0..3 {
-            characters.push(Character {
-                name: output.get(i * 2).unwrap().to_owned(),
-                series: output.get(i * 2 + 1).unwrap().to_owned(),
-                gen: Some(
-                    output
-                        .get(6 + i * 2 / 2)
-                        .unwrap_or(&"null".to_string())
-                        .to_string(),
-                ),
-                wl: None,
-            });
-        }
-        let card_handler_sender_sub = card_handler_sender.clone();
-        tokio::spawn(async move {
-            card_handler_sender_sub
-                .send(CardsHandleType::FindCard(characters, return_sender))
-                .await
-        });
-    }
-}
-
 static CORDS_GEN: &[&[u32]] = &[
     &[12, 458, 290, 26],
     &[12, 487, 290, 26],
@@ -60,15 +20,51 @@ static CORDS_GEN: &[&[u32]] = &[
     &[728, 427, 108, 26],
 ];
 
-pub fn ocr_drop(workers: &mut [LepTess; 9], im: &DynamicImage) -> Vec<String> {
+#[allow(unreachable_code)]
+pub async fn drop_ocr_loop(
+    mut drop_receiver: mpsc::Receiver<(DynamicImage, oneshot::Sender<Vec<Character>>)>,
+    init_sender: Sender<bool>,
+    card_handler_sender: mpsc::Sender<CardsHandleType>,
+) {
+    let mut workers: Vec<LepTess> = vec![];
+    for _ in 0..9 {
+        let mut worker = LepTess::new(None, "eng").unwrap();
+        worker
+            .set_variable(Variable::TesseditPagesegMode, "7")
+            .unwrap();
+        workers.push(worker);
+    }
+    init_sender.send(true).await.unwrap();
+    loop {
+        let (im, return_sender) = drop_receiver.recv().await.unwrap();
+        let output = ocr(&mut workers, &im, CORDS_GEN);
+        let mut characters = vec![];
+        for i in 0..3 {
+            characters.push(Character {
+                name: output.get(i * 2).unwrap().to_owned(),
+                series: output.get(i * 2 + 1).unwrap().to_owned(),
+                gen: Some(output.get(6 + i * 2 / 2).unwrap().to_owned()),
+                wl: None,
+            });
+        }
+        let card_handler_sender_sub = card_handler_sender.clone();
+        tokio::spawn(async move {
+            card_handler_sender_sub
+                .send(CardsHandleType::FindCard(characters, return_sender))
+                .await
+        });
+    }
+}
+
+pub fn ocr(workers: &mut Vec<LepTess>, im: &DynamicImage, cords: &[&[u32]]) -> Vec<String> {
     let arr = workers
         .par_iter_mut()
         .enumerate()
         .map(|(i, worker)| {
-            if i >= CORDS_GEN.len() {
+            if i >= cords.len() {
                 return String::new();
             }
-            if CORDS_GEN[i][2] == 108 {
+            if cords[i][2] == 108 {
                 worker
                     .set_variable(Variable::TesseditCharWhitelist, "1234567890")
                     .unwrap();
@@ -83,24 +79,17 @@ pub fn ocr_drop(workers: &mut [LepTess; 9], im: &DynamicImage) -> Vec<String> {
             sub_ocr(
                 &mut im.clone(),
                 worker,
-                CORDS_GEN[i][0],
-                CORDS_GEN[i][1],
-                CORDS_GEN[i][2],
-                CORDS_GEN[i][3],
+                cords[i][0],
+                cords[i][1],
+                cords[i][2],
+                cords[i][3],
             )
         })
         .collect();
     arr
 }
 
-pub fn sub_ocr(
-    im: &mut DynamicImage,
-    worker: &mut LepTess,
-    x: u32,
-    y: u32,
-    w: u32,
-    h: u32,
-) -> String {
+fn sub_ocr(im: &mut DynamicImage, worker: &mut LepTess, x: u32, y: u32, w: u32, h: u32) -> String {
     let baseim = im.sub_image(x, y, w, h);
     let mut subim = imageops::grayscale(&baseim.to_image());
     let mut linear = ImageBuffer::new(subim.width(), subim.height());

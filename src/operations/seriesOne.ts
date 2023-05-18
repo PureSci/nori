@@ -8,7 +8,6 @@ export function filter(message: Message): boolean {
 }
 
 export async function run(message: Message) {
-    if (!message.guildId) return;
     let config = await getServerConfig("serverDrops.series.one", message.guildId);
     if (!config.enabled.data) return;
     let rawSeries = message.embeds[0].description?.split("\n");
@@ -19,9 +18,3 @@ export async function run(message: Message) {
     let format = fetchFormat(config.format.data, findOutput);
     message.reply(format).catch(_ => null);
 }
-/**
- * I will drop cards from the most voted series :smugsofi:
-1] Soul Eater NOT!
-2] Cross Game
-3] Terra Formars: Revenge
- */
