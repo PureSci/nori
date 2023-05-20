@@ -1,6 +1,6 @@
 import { ChannelType, Message } from "discord.js";
 import { getUserConfig } from "./databaseHandler.js";
-import constants from "./constants.js";
+import constants from "./Constants.js";
 
 let reminderType: {
     [key: string]: number

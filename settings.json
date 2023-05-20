@@ -6,6 +6,7 @@
     ],
     "features": [
         "developer",
-        "dropAnalysis"
+        "dropAnalysis",
+        "config"
     ]
 }

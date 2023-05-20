@@ -11,7 +11,11 @@ export const data = {
     "feature": "developer"
 };
 
-export async function run(message: Message, args: string[]) {
+export function messageRun(message: Message, args: string[]) {
+    run(message, args);
+}
+
+async function run(message: Message, args: string[]) {
     if (!settings.developers.some(developer => developer == message.author.id)) return;
     switch (args[0]) {
         case "drop":

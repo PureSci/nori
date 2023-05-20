@@ -22,8 +22,8 @@ const serverConfigObject = {
         format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}\n{copy1?3}" }
     },
     reminders: {
-        drop: { type: Boolean, default: true },
-        grab: { type: Boolean, default: false }
+        drop: { type: Schema.Types.Mixed, default: true },
+        grab: { type: Schema.Types.Mixed, default: false }
     },
     serverDrops: {
         captcha: {
@@ -54,20 +54,22 @@ export const ServerConfig = mongoose.model("serverConfig", new Schema({
 
 let serverConfigDefaults = convertServerDefaults(serverConfigObject);
 
-export async function getUserConfig(query: string, userId: string, guildId: string | null) {
+export async function getUserConfig(query: string, userId: string, guildId: string | null, isServer: boolean = false) {
+    if (isServer) return await getServerConfig(query, guildId);
     let userConfigResponse: any = await UserConfig.findById(userId, query === "_all" ? null : query).lean().exec();
-    if (!userConfigResponse) {
+    if (userConfigResponse == null) {
         return getServerConfig(query, guildId);
     }
     if (query == "_all") {
         return completeNonexistend(userConfigResponse, query, guildId);
     } else {
-        if (!userConfigResponse[query.split(".")[0]]) {
+        if (userConfigResponse[query.split(".")[0]] == null) {
             userConfigResponse = getServerConfig(query, guildId);
         }
         query.split(".").forEach(key => {
             userConfigResponse = userConfigResponse[key];
         });
+        if (userConfigResponse == null) return getServerConfig(query, guildId);
         return completeNonexistend(userConfigResponse, query, guildId);
     }
 }
@@ -79,7 +81,7 @@ export async function getServerConfig(query: string, guildId: string | null) {
         return convertDefaulted(serverConfigResponse, true);
     } else {
         serverConfigResponse = await ServerConfig.findById(guildId, query).lean().exec() ?? serverConfigDefaults;
-        if (!serverConfigResponse[query.split(".")[0]]) {
+        if (serverConfigResponse[query.split(".")[0]] == null) {
             serverConfigResponse = serverConfigDefaults;
         }
         query.split(".").forEach(key => {
@@ -90,8 +92,8 @@ export async function getServerConfig(query: string, guildId: string | null) {
 }
 
 async function completeNonexistend(userConfigResponse: any, query: string, guildId: string | null) {
-    let serverConfigResponse = getServerConfig(query, guildId);
-    return convertDefaulted(merge(serverConfigResponse, userConfigResponse), false);
+    let serverConfigResponse = await getServerConfig(query, guildId);
+    return merge(serverConfigResponse, convertDefaulted(userConfigResponse, false));
 }
 
 function convertDefaulted(obj: any, serverDefault: boolean): any {
@@ -120,7 +122,7 @@ function convertServerDefaults(obj: any) {
     let converted: any = {};
     for (const [key, value] of Object.entries(obj)) {
         if (typeof value === "object") {
-            if ((value as any).type && (value as any).default) {
+            if ((value as any).type && (value as any).default !== (undefined || null)) {
                 converted[key] = (value as any).default;
             } else converted[key] = convertServerDefaults(value);
         }

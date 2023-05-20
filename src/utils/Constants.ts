@@ -1,0 +1,6 @@
+export default Object.freeze({
+    SOFI_ID: "853629533855809596",
+    REMINDER_EMOJI: "<:reminder_set:1061639553154285669>",
+    ON_EMOJI: "<:on:1063161763786391572>",
+    OFF_EMOJI: "<:off:1063161785777135718>"
+});
