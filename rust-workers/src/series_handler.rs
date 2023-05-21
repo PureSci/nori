@@ -122,7 +122,7 @@ async fn update_series(database: Database, card: Series) {
         .collection::<Document>("analysis_series")
         .update_one(
             doc! {
-                "name": &card.series
+                "series": &card.series
             },
             doc! {
                 "$set": {

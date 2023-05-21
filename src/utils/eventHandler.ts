@@ -28,6 +28,14 @@ export default async function (client: Client) {
             run: operation.run
         };
     }));
+    let editOperationFiles = fs.readdirSync("./src/editOperations/");
+    let editOperations = await Promise.all(editOperationFiles.map(async file => {
+        let operation = await import(`../editOperations/${file}`);
+        return {
+            filter: operation.filter,
+            run: operation.run
+        };
+    }));
     let registerCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
     let commandFiles = fs.readdirSync("./src/interactions/commands/");
     let commands: Command[] = [];
@@ -64,6 +72,14 @@ export default async function (client: Client) {
             let args = commandSplitted.slice(1);
             let command = commands.find(command => command.data.aliases.some((alias: string) => alias == commandName));
             if (command) command.messageRun(message, args);
+        }
+    });
+    client.on("messageUpdate", (oldMessage, newMessage) => {
+        if (!newMessage.guildId) return;
+        if (newMessage.author && newMessage.author.id == Constants.SOFI_ID) {
+            editOperations.forEach(async operation => {
+                if (operation.filter(newMessage)) operation.run(newMessage);
+            });
         }
     });
     client.on("interactionCreate", interaction => {
