@@ -114,7 +114,7 @@ async fn update_card(database: Database, card: Character) {
 fn format_string(mut string: String) -> (bool, String) {
     string = string
         .chars()
-        .filter(|&c| c.is_ascii_alphanumeric() || c == '.')
+        .filter(|&c| c.is_ascii_alphabetic() || c == '.')
         .collect();
     if string.ends_with("....") {
         string = string.replace("....", "...");

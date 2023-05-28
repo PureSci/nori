@@ -9,7 +9,6 @@ export function filter(message: Message): boolean {
 }
 
 export async function run(message: Message, url?: string) {
-    let startTime = Date.now();
     let dropper = message.content?.split("<@")?.[1]?.split(">")?.[0];
     let analysisConfig = await getUserConfig("analysis", dropper, message.guildId);
 
@@ -18,10 +17,9 @@ export async function run(message: Message, url?: string) {
     let cardData: Character[];
 
     if (message.attachments.size > 0 || url) {
-        url = url || message.attachments.first()?.url;
+        url = url ?? message.attachments.first()?.url;
         if (!url) return;
         cardData = await bridge.ocrDrop(url);
-        console.log(Date.now() - startTime);
     } else {
         let tempCardData: Character[] = [];
         for (let i = 0; i < 3; i++) {
@@ -50,8 +48,13 @@ function handleMessage(message: Message, ocrOutput: Character[], analysisConfig:
     let format: string = analysisConfig.format.data;
     format = fetchFormat(format, ocrOutput);
     message.fetchReference().then(dropMessage => {
-        dropMessage.reply(format);
+        dropMessage.reply({
+            content: format,
+            allowedMentions: {
+                users: analysisConfig.mention.data ? undefined : [dropper]
+            }
+        });
     }).catch(_ => {
-        message.reply(format + `\n<@${dropper}>`).catch(_ => null);
+        message.reply(format + (analysisConfig.mention.data ? `\n<@${dropper}>` : "")).catch(_ => null);
     });
 }

@@ -1,28 +1,27 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuInteraction, parseEmoji } from "discord.js";
 
 import "./reminders.js";
+import "./analysis.js";
 
-import { configObjects, configTypes } from "../configTypes.js";
-import { UserConfig, getUserConfig } from "../../utils/databaseHandler.js";
+import { ConfigOption, configObjects, configTypes } from "../configTypes.js";
+import { UserConfig, getUserConfig, setData } from "../../utils/databaseHandler.js";
 function defaultComponents(userId: string, isServer: boolean) {
     return [
         new ActionRowBuilder<StringSelectMenuBuilder>({
             components: [
                 new StringSelectMenuBuilder({
                     custom_id: `configSelector_${userId}_${isServer}`,
+                    // @ts-ignore
+                    options: configTypes.map(configType => {
+                        return {
+                            label: configType.prettyName,
+                            description: `Configs for ${configType.prettyName}`,
+                            // @ts-ignore
+                            emoji: parseEmoji(configType.emoji)!,
+                            value: `configSelect_${configType.name}`
+                        }
+                    })
                 })
-                    .addOptions(
-                        // @ts-ignore
-                        configTypes.map(configType => {
-                            return {
-                                label: configType.prettyName,
-                                description: `Configs for ${configType.prettyName}`,
-                                // @ts-ignore
-                                emoji: parseEmoji(configType.emoji),
-                                value: `configSelect_${configType.name}`
-                            }
-                        })
-                    )
             ]
         })
     ]
@@ -39,17 +38,26 @@ export function getConfigComponents(defaultOption: "reminders" | "analysis", use
 
 export async function formatConfig(type: string, guildId: string, userId: string) {
     const configType = getConfigType(type);
-    let configData: any = await getUserConfig(configType.name, userId, guildId);
-    return configType.options.map((configOption, index) => {
+    return await formatConfigComp(configType.options, configType.name, userId, guildId);
+}
+
+export async function formatConfigComp(options: ConfigOption[], query: string, userId: string, guildId: string, extraIndex?: number) {
+    let configData: any = await getUserConfig(query, userId, guildId);
+    return options.map((configOption, index) => {
         let config = configData[configOption.name];
         let option = configOption.options.find(option => option.name == config.data);
-        return `\`${index + 1}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault ? " <Server Default>" : ""}`;
+        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault ? " <:server_default:1112107708812894240>" : ""}`;
     }).join("\n");
 }
 
 export function getOptionComponents(type: string, userId: string, isServer: boolean) {
     const configType = getConfigType(type);
-    let computed = computeValues(configType.options.length);
+    return getOptionComponentsComp(configType.options, type, userId, isServer);
+}
+
+export function getOptionComponentsComp(options: ConfigOption[], type: string, userId: string, isServer: boolean, customId?: string) {
+    if (options.length == 0) return [];
+    const computed = computeValues(options.length);
     let components = [];
     let i = 1;
     for (let _ = 0; _ < computed[0]; _++) {
@@ -58,7 +66,7 @@ export function getOptionComponents(type: string, userId: string, isServer: bool
             row.addComponents(
                 new ButtonBuilder({
                     //          configOptionChange_userId_isServer_reminders_drop
-                    custom_id: `configOptionChange_${userId}_${isServer ? "server" : "user"}_${type}_${configType.options[i - 1].name}`,
+                    custom_id: `${customId ?? "configOptionChange"}_${userId}_${isServer ? "server" : "user"}_${type}_${options[i - 1].name}`,
                     style: ButtonStyle.Primary,
                     label: `${i}`,
                 })
@@ -77,23 +85,19 @@ export async function handleConfigSelector(interaction: StringSelectMenuInteract
 }
 
 export async function handleOptionChange(interaction: ButtonInteraction, isServer: boolean) {
-    let data = interaction.customId.split("_");
-    let type = data[3];
-    let option = data[4];
-    let configType = getConfigType(type);
-    let currentOption = configType.options.find(opt => opt.name == option)!;
-    let config = await getUserConfig(`${type}.${option}`, interaction.user.id, interaction.guildId, isServer);
+    const data = interaction.customId.split("_");
+    const type = data[3];
+    const option = data[4];
+    const configType = getConfigType(type);
+    const currentOption = configType.options.find(opt => opt.name == option)!;
+    const config = await getUserConfig(`${type}.${option}`, interaction.user.id, interaction.guildId, isServer);
     let currentSuboptionIndex = currentOption.options.findIndex(subopt => subopt.name == config.data);
     let operation = "$set";
     if (currentSuboptionIndex == currentOption.options.length - 1) {
         operation = "$unset";
         currentSuboptionIndex = 0;
     } else if (config.serverDefault && !isServer) currentSuboptionIndex = -1;
-    await UserConfig.findByIdAndUpdate(interaction.user.id, {
-        [operation]: {
-            [`${type}.${option}`]: currentOption.options[currentSuboptionIndex + 1].name
-        }
-    }, { upsert: true }).exec();
+    await setData(isServer ? interaction.guildId! : interaction.user.id, `${type}.${option}`, currentOption.options[currentSuboptionIndex + 1].name, isServer, operation);
     interaction.message.edit(await configObjects[type](interaction.guildId!, interaction.user.id, isServer));
     interaction.deferUpdate();
 }

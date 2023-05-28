@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Model, Mongoose, Schema } from "mongoose";
 import settings from "../../settings.json" assert {type: "json"};
 import merge from "lodash.merge";
 
@@ -8,18 +8,42 @@ export const UserConfig = mongoose.model("userConfig", new Schema({
     _id: String,
     analysis: {
         enabled: Boolean,
-        format: String
+        mention: Boolean,
+        format: String,
+        preset: String,
+        presets: {
+            standart: {
+                showNumbers: Boolean,
+                showGen: Boolean,
+                showSeries: Boolean
+            },
+            custom: {
+                format: String
+            }
+        }
     },
     reminders: {
         drop: Schema.Types.Mixed,
-        grab: Schema.Types.Mixed
+        grab: Schema.Types.Mixed,
     }
 }));
 
 const serverConfigObject = {
     analysis: {
         enabled: { type: Boolean, default: true },
-        format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}\n{copy1?3}" }
+        mention: { type: Boolean, default: true },
+        format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}\n{copy1?3}" },
+        preset: { type: String, default: "standart" },
+        presets: {
+            standart: {
+                showNumbers: { type: Boolean, default: true },
+                showGen: { type: Boolean, default: true },
+                showSeries: { type: Boolean, default: true }
+            },
+            custom: {
+                format: { type: String, default: "`1]` • :heart: `{wl1}` • `ɢ{gen1}` • **{cardname1}** • {cardseries1}\n{copy1?2}\n{copy1?3}" }
+            }
+        }
     },
     reminders: {
         drop: { type: Schema.Types.Mixed, default: true },
@@ -54,6 +78,15 @@ export const ServerConfig = mongoose.model("serverConfig", new Schema({
 
 let serverConfigDefaults = convertServerDefaults(serverConfigObject);
 
+export async function setData(id: string, query: string, data: any, isServer: boolean, operation?: string) {
+    // @ts-ignore
+    await (isServer ? ServerConfig : UserConfig).findByIdAndUpdate(id, {
+        [operation ?? "$set"]: {
+            [query]: data
+        }
+    }, { upsert: true }).exec();
+}
+
 export async function getUserConfig(query: string, userId: string, guildId: string | null, isServer: boolean = false) {
     if (isServer) return await getServerConfig(query, guildId);
     let userConfigResponse: any = await UserConfig.findById(userId, query === "_all" ? null : query).lean().exec();
@@ -67,7 +100,7 @@ export async function getUserConfig(query: string, userId: string, guildId: stri
             userConfigResponse = getServerConfig(query, guildId);
         }
         query.split(".").forEach(key => {
-            userConfigResponse = userConfigResponse[key];
+            userConfigResponse = userConfigResponse?.[key];
         });
         if (userConfigResponse == null) return getServerConfig(query, guildId);
         return completeNonexistend(userConfigResponse, query, guildId);

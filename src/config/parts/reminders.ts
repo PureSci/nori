@@ -1,3 +1,4 @@
+import { client } from "../../index.js";
 import Constants from "../../utils/Constants.js";
 import { SubConfigOption, SubConfigOptionFALSE, SubConfigOptionTRUE, configObjects, configTypes } from "../configTypes.js";
 import { getConfigComponents, formatConfig, getOptionComponents } from "./handler.js";
@@ -10,8 +11,8 @@ let SubConfigOptionDM: SubConfigOption = {
 configTypes.push({
     name: "reminders",
     prettyName: "Reminders",
-    emoji: "🔍",
-    server_only: false,
+    emoji: "<:reminder_set:1061639553154285669> ",
+    serverOnly: false,
     options: [
         {
             name: "drop",
@@ -37,11 +38,14 @@ configTypes.push({
 configObjects["reminders"] = async (guildId: string, userId: string, isServer: boolean = false) => {
     return {
         embeds: [{
-            title: `User Reminder Config`,
+            title: `${isServer ? "Server" : "User"} Reminder Config`,
             description: await formatConfig("reminders", guildId, userId),
             color: 15641224,
             footer: {
                 text: "Use the Buttons below to toggle the attached option to it."
+            },
+            thumbnail: {
+                url: isServer ? (client.guilds.cache.get(guildId)?.iconURL({ forceStatic: true }) ?? "") : (client.users.cache.get(userId)?.avatarURL({ forceStatic: true }) ?? "")
             }
         }],
         components: [

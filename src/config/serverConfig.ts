@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction, Message, PermissionFlagsBits, SlashCommandBuilder, User } from "discord.js";
+import { configObjects } from "./configTypes.js";
 
 export const data = {
     "aliases": ["serverconfig", "serverconf"],
@@ -20,5 +21,5 @@ export function messageRun(message: Message) {
 }
 
 async function run(message: Message | ChatInputCommandInteraction, user: User) {
-
+    message.reply(await configObjects["reminders"](message.guildId!, user.id, true));
 }
