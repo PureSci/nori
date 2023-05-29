@@ -4,6 +4,7 @@ import { getConfigComponents, formatConfig, getOptionComponents, getOptionCompon
 import { UserConfig, getUserConfig, setData } from "../../utils/databaseHandler.js";
 import { fetchFormat } from "../../utils/index.js";
 import { Character } from "../../../rust-workers/rust-workers.js";
+import { client } from "../../index.js";
 
 configTypes.push({
     name: "analysis",
@@ -36,11 +37,10 @@ const exampleCharData: Character[] = [
 
 const presets = {
     standart: {
-        prettyName: "Standart",
+        prettyName: "Standard",
         description: "Default Preset, looks the best fr",
-        format: (args: any[]) => {
-            // showNumbers: boolean, showGen: boolean, showSeries: boolean
-            return `${args[0] ? "`1]` • " : ""}:heart: \`{wl1}\`${args[1] ? "• `ɢ{gen1}`" : ""} • **{cardname1}**${args[2] ? " • {cardseries1}" : ""}\n{copy1?2}\n{copy1?3}`;
+        format: (config: any) => {
+            return `${config.showNumbers.data ? "`1]` • " : ""}:heart: \`{wl1}\`${config.showGen.data ? "• `ɢ{gen1}`" : ""} • **{cardname1}**${config.showSeries.data ? " • {cardseries1}" : ""}\n{copy1?2}\n{copy1?3}`;
         },
         options: [
             {
@@ -114,14 +114,17 @@ configObjects["analysis"] = async (guildId: string, userId: string, isServer: bo
     return {
         embeds: [{
             title: `${isServer ? "Server" : "User"} Analysis Config`,
-            description: await formatConfigComp(permOptions, "analysis", userId, guildId) + "\n\n" + (
+            description: await formatConfigComp(permOptions, "analysis", userId, guildId, isServer) + "\n\n" + (
                 configPreset.data == "custom" ? `Current Format:\n\`\`\`md\n${format.data}\n\`\`\``
-                    : await formatConfigComp(preset.options, `analysis.presets.${configPreset.data}`, userId, guildId, 2) + "\n")
+                    : await formatConfigComp(preset.options, `analysis.presets.${configPreset.data}`, userId, guildId, isServer, 2) + "\n")
                 + `\nAppearance:\n${fetchFormat(format.data, exampleCharData)}`
             ,
             color: 15641224,
             footer: {
                 text: "Use the Buttons below to toggle the attached option to it."
+            },
+            thumbnail: {
+                url: isServer ? (client.guilds.cache.get(guildId)?.iconURL({ forceStatic: true }) ?? "") : (client.users.cache.get(userId)?.avatarURL({ forceStatic: true }) ?? "")
             }
         }],
         components: [
@@ -164,13 +167,17 @@ customInteractions.push({
         let currentSuboptionIndex = options.findIndex(subopt => subopt.name == config.data);
         let operation = "$set";
         if (currentSuboptionIndex == options.length - 1) {
-            operation = "$unset";
-            currentSuboptionIndex = 0;
+            if (!isServer) {
+                operation = "$unset";
+                currentSuboptionIndex = 0;
+            } else {
+                currentSuboptionIndex = -1;
+            }
         } else if (config.serverDefault && !isServer) currentSuboptionIndex = -1;
         await setData(isServer ? interaction.guildId! : interaction.user.id, query, options[currentSuboptionIndex + 1].name, isServer, operation);
         if (!isTopData) {
             const fullConfig = await getUserConfig(`analysis.presets.${data[3]}`, interaction.user.id, interaction.guildId, isServer);
-            await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.format", presets[data[3] as keyof typeof presets].format(Object.keys(fullConfig).map(key => fullConfig[key].data)), isServer);
+            await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.format", presets[data[3] as keyof typeof presets].format(fullConfig), isServer);
         }
         interaction.message.edit(await configObjects["analysis"](interaction.guildId!, interaction.user.id, isServer));
         interaction.deferUpdate();
@@ -232,7 +239,7 @@ customInteractions.push({
     },
     run: async (interaction) => {
         const splitted = interaction.customId.split("_");
-        const isServer = splitted[1] == "true";
+        const isServer = splitted[2] == "true";
         const preset = (interaction as StringSelectMenuInteraction).values[0];
         await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.preset", preset, isServer);
         if (preset == "custom") {
@@ -240,7 +247,7 @@ customInteractions.push({
             await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.format", format.data, isServer);
         } else {
             const fullConfig = await getUserConfig(`analysis.presets.${preset}`, interaction.user.id, interaction.guildId, isServer);
-            await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.format", presets[preset as keyof typeof presets].format(Object.keys(fullConfig).map(key => fullConfig[key].data)), isServer);
+            await setData(isServer ? interaction.guildId! : interaction.user.id, "analysis.format", presets[preset as keyof typeof presets].format(fullConfig), isServer);
         }
         await interaction.message.edit(await configObjects["analysis"](interaction.guildId!, interaction.user.id, isServer));
         interaction.deferUpdate();

@@ -1,12 +1,15 @@
 {
-    "dbUrl": "mongodb://localhost:27017/ogonoridev",
+    "dbUrl": "mongodb://127.0.0.1:27017/ogonoridev",
     "prefix": "n",
     "developers": [
         "353623899184824330"
     ],
     "features": [
+        "general",
         "developer",
         "dropAnalysis",
         "config"
-    ]
+    ],
+    "statusChannelId": "1112443018331558088",
+    "developerChannelId": "1076558792856182957"
 }

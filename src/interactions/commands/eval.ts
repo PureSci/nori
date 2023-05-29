@@ -1,10 +1,12 @@
 import { Attachment, AttachmentBuilder, Collection, Message, SlashCommandBuilder } from "discord.js";
 import settings from "../../../settings.json" assert {type: "json"};
-import { run as dropRun } from "../../dropAnalysis.js";
+import humanizeDuration from "humanize-duration";
+import { analysisCount, analysisStartTime, averageSpan, run as dropRun, lastAnalysisSpans } from "../../dropAnalysis.js";
 import { run as captchaRun } from "../../operations/captchaDrop.js";
 import { run as seriesOneRun } from "../../operations/seriesOne.js";
 import { run as seriesTwoRun } from "../../operations/seriesTwo.js";
 import { run as minigameRun } from "../../operations/minigame.js";
+import { saveReminders } from "../../utils/reminderHandler.js";
 
 export const data = {
     "aliases": ["eval", "e"],
@@ -58,17 +60,6 @@ async function run(message: Message, args: string[]) {
                 }]
             }).then(m => captchaRun(m));
             break;
-        case "seriesone":
-            message.channel.send({
-                embeds: [{
-                    description: `**I will drop cards from the most voted series :smugsofi:
-                    1] Soul Eater NOT!
-                    2] Cross Game
-                    3] Terra Formars: Revenge
-                    `
-                }]
-            }).then(m => seriesOneRun(m));
-            break;
         case "seriestwo":
             let seriesTwoAttachment = "https://cdn.discordapp.com/attachments/1005561572623659069/1108748128678576168/drop.png"
             if (args.length > 1) seriesTwoAttachment = args.slice(1).join(" ");
@@ -83,5 +74,30 @@ async function run(message: Message, args: string[]) {
                 }]
             }).then(m => minigameRun(m));
             break;
+        case "mets":
+            if (args[1] == "drop") {
+                message.reply({
+                    embeds: [{
+                        title: "Drop Analysis Metrics",
+                        description: `**Analysis Avg:** ${averageSpan.toFixed(2)}ms\n` +
+                            `**Analysis/m:** ${(analysisCount / ((Date.now() - analysisStartTime) / 60000)).toFixed(2)}\n` +
+                            `**Last 10 Analysis:**\n${lastAnalysisSpans.map(x => `\`${x}\`ms`).join("\n")}`,
+                        color: 15105570
+                    }]
+                });
+            } else message.reply({
+                embeds: [{
+                    title: "Dev Metrics",
+                    description: `**Uptime:** ${humanizeDuration(process.uptime() * 1000, { maxDecimalPoints: 2 })}\n` +
+                        `**Analysis Avg:** ${averageSpan.toFixed(2)}ms\n` +
+                        `**Analysis/m:** ${(analysisCount / ((Date.now() - analysisStartTime) / 60000)).toFixed(2)}\n` +
+                        `**API latency:** ${message.client.ws.ping}ms`,
+                    color: 15105570
+                }]
+            });
+            break;
+        case "restart":
+            saveReminders();
+            process.exit(1);
     }
 }

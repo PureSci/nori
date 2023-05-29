@@ -78,8 +78,11 @@ pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, init_sen
                 }) {
                     None => {
                         if (!is_dot_name) && (!is_dot_series) {
-                            characters.push(card.clone());
-                            tokio::spawn(update_card(db.clone(), card.clone()));
+                            let mut m_card = card.clone();
+                            m_card.name = card_name;
+                            m_card.series = card_series;
+                            characters.push(m_card.clone());
+                            tokio::spawn(update_card(db.clone(), m_card.clone()));
                         }
                     }
                     Some(found_card) => {
@@ -114,7 +117,7 @@ async fn update_card(database: Database, card: Character) {
 fn format_string(mut string: String) -> (bool, String) {
     string = string
         .chars()
-        .filter(|&c| c.is_ascii_alphabetic() || c == '.')
+        .filter(|&c| c.is_ascii_alphanumeric() || c == '.')
         .collect();
     if string.ends_with("....") {
         string = string.replace("....", "...");
@@ -131,10 +134,10 @@ fn format_string_lite(string: &str) -> (bool, String) {
         string.ends_with("..."),
         string
             .chars()
-            .filter(|&c| c.is_ascii_alphabetic() || c == '.')
+            .filter(|&c| c.is_ascii_alphanumeric() || c == '.')
             .map(|c| c.to_ascii_lowercase())
             .collect::<String>()
-            .replace("...", "."),
+            .replace("...", ""),
     )
 }
 
@@ -146,12 +149,14 @@ fn check_match(character: &String, card: &String, is_dot: &bool) -> bool {
         let mut diff_chars: [char; 2] = ['.', '.'];
         let mut character_mut = character.to_owned();
         let mut card_mut = card.to_owned();
+        let mut index = 0;
         for (c1, c2) in character.chars().zip(card.chars()) {
             if c1 != c2 {
                 diffs += 1;
                 if diffs > 1 {
                     return false;
                 }
+                diff_chars = [c1, c2];
                 if !BALANCERS.iter().any(|balancer| {
                     balancer
                         .iter()
@@ -159,10 +164,10 @@ fn check_match(character: &String, card: &String, is_dot: &bool) -> bool {
                 }) {
                     return false;
                 }
-                diff_chars = [c1, c2];
-                character_mut.remove(0);
-                card_mut.remove(0);
+                character_mut.remove(index);
+                card_mut.remove(index);
             }
+            index += 1;
         }
         check_equal(&character_mut, &card_mut, is_dot)
     }

@@ -92,6 +92,7 @@ async function initCommands(): Promise<[Command[], RESTPostAPIChatInputApplicati
         if (!command.data) return;
         if (!settings.features.some(feature => feature == command.data.feature)) return;
         if (command.register) registerCommands.push(command.register.toJSON());
+        console.log(`Registering command ${file}`);
         commands.push(command);
     }
     for (const file of commandFiles) {

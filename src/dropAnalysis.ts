@@ -4,13 +4,19 @@ import { getUserConfig } from "./utils/databaseHandler.js";
 import reminderHandler from "./utils/reminderHandler.js";
 import { fetchFormat } from "./utils/index.js";
 import { Character } from "../rust-workers/rust-workers.js";
+
+export let lastAnalysisSpans: number[] = [];
+export let averageSpan: number = 0;
+export let analysisStartTime = Date.now();
+export let analysisCount = 0;
+
 export function filter(message: Message): boolean {
     return message.content.endsWith("is dropping the cards") || message.content.includes("Your extra drop is being used.");
 }
 
 export async function run(message: Message, url?: string) {
-    let dropper = message.content?.split("<@")?.[1]?.split(">")?.[0];
-    let analysisConfig = await getUserConfig("analysis", dropper, message.guildId);
+    const dropper = message.content?.split("<@")?.[1]?.split(">")?.[0];
+    const analysisConfig = await getUserConfig("analysis", dropper, message.guildId);
 
     if (!analysisConfig.enabled.data) return;
 
@@ -43,18 +49,28 @@ export async function run(message: Message, url?: string) {
     }
 }
 
-
 function handleMessage(message: Message, ocrOutput: Character[], analysisConfig: any, dropper: string) {
     let format: string = analysisConfig.format.data;
     format = fetchFormat(format, ocrOutput);
+    let processedTime = (Date.now() - message.createdTimestamp);
+    averageSpan = (averageSpan + processedTime) / 2;
+    pushSpan(processedTime);
+    analysisCount++;
     message.fetchReference().then(dropMessage => {
         dropMessage.reply({
             content: format,
             allowedMentions: {
                 users: analysisConfig.mention.data ? undefined : [dropper]
             }
-        });
+        }).catch(_ => null);
     }).catch(_ => {
         message.reply(format + (analysisConfig.mention.data ? `\n<@${dropper}>` : "")).catch(_ => null);
     });
+}
+
+function pushSpan(time: number) {
+    lastAnalysisSpans.push(time);
+    if (lastAnalysisSpans.length > 10) {
+        lastAnalysisSpans.shift();
+    }
 }

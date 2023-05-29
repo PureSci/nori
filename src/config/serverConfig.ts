@@ -17,6 +17,7 @@ export function interactionRun(interaction: ChatInputCommandInteraction) {
 }
 
 export function messageRun(message: Message) {
+    if (!message.member?.permissions.has(PermissionFlagsBits.ManageMessages)) return;
     run(message, message.author);
 }
 

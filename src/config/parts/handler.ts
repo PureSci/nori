@@ -36,17 +36,17 @@ export function getConfigComponents(defaultOption: "reminders" | "analysis", use
     return components;
 }
 
-export async function formatConfig(type: string, guildId: string, userId: string) {
+export async function formatConfig(type: string, guildId: string, userId: string, isServer: boolean) {
     const configType = getConfigType(type);
-    return await formatConfigComp(configType.options, configType.name, userId, guildId);
+    return await formatConfigComp(configType.options, configType.name, userId, guildId, isServer);
 }
 
-export async function formatConfigComp(options: ConfigOption[], query: string, userId: string, guildId: string, extraIndex?: number) {
-    let configData: any = await getUserConfig(query, userId, guildId);
+export async function formatConfigComp(options: ConfigOption[], query: string, userId: string, guildId: string, isServer: boolean, extraIndex?: number) {
+    let configData: any = await getUserConfig(query, userId, guildId, isServer);
     return options.map((configOption, index) => {
         let config = configData[configOption.name];
         let option = configOption.options.find(option => option.name == config.data);
-        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault ? " <:server_default:1112107708812894240>" : ""}`;
+        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer ? " <:server_default:1112107708812894240>" : ""}`;
     }).join("\n");
 }
 
@@ -94,8 +94,12 @@ export async function handleOptionChange(interaction: ButtonInteraction, isServe
     let currentSuboptionIndex = currentOption.options.findIndex(subopt => subopt.name == config.data);
     let operation = "$set";
     if (currentSuboptionIndex == currentOption.options.length - 1) {
-        operation = "$unset";
-        currentSuboptionIndex = 0;
+        if (!isServer) {
+            operation = "$unset";
+            currentSuboptionIndex = 0;
+        } else {
+            currentSuboptionIndex = -1;
+        }
     } else if (config.serverDefault && !isServer) currentSuboptionIndex = -1;
     await setData(isServer ? interaction.guildId! : interaction.user.id, `${type}.${option}`, currentOption.options[currentSuboptionIndex + 1].name, isServer, operation);
     interaction.message.edit(await configObjects[type](interaction.guildId!, interaction.user.id, isServer));

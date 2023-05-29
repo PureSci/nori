@@ -4,3 +4,5 @@
 nodemon.json
 /rust-workers/rust-workers.node
 /rust-workers/rust-workers.d.ts
+.yarn/
+reminders.json

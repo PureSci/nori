@@ -39,7 +39,7 @@ configObjects["reminders"] = async (guildId: string, userId: string, isServer: b
     return {
         embeds: [{
             title: `${isServer ? "Server" : "User"} Reminder Config`,
-            description: await formatConfig("reminders", guildId, userId),
+            description: await formatConfig("reminders", guildId, userId, isServer),
             color: 15641224,
             footer: {
                 text: "Use the Buttons below to toggle the attached option to it."

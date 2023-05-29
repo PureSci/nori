@@ -1,4 +1,4 @@
-import mongoose, { Model, Mongoose, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import settings from "../../settings.json" assert {type: "json"};
 import merge from "lodash.merge";
 
@@ -114,14 +114,19 @@ export async function getServerConfig(query: string, guildId: string | null) {
         return convertDefaulted(serverConfigResponse, true);
     } else {
         serverConfigResponse = await ServerConfig.findById(guildId, query).lean().exec() ?? serverConfigDefaults;
-        if (serverConfigResponse[query.split(".")[0]] == null) {
-            serverConfigResponse = serverConfigDefaults;
-        }
-        query.split(".").forEach(key => {
-            serverConfigResponse = serverConfigResponse[key];
-        });
-        return convertDefaulted(serverConfigResponse, true);
+        serverConfigResponse = sServer(serverConfigResponse, query);
+        return merge(convertDefaulted(sServer(serverConfigDefaults, query), true), convertDefaulted(serverConfigResponse, true));
     }
+}
+
+function sServer(serverConfigResponse: any, query: string) {
+    if (serverConfigResponse[query.split(".")[0]] == null) {
+        serverConfigResponse = serverConfigDefaults;
+    }
+    query.split(".").forEach(key => {
+        serverConfigResponse = serverConfigResponse[key];
+    });
+    return serverConfigResponse;
 }
 
 async function completeNonexistend(userConfigResponse: any, query: string, guildId: string | null) {

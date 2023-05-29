@@ -12,6 +12,7 @@ export async function run(message: Message) {
     if (!config.enabled.data) return;
     let rawSeries = message.embeds[0].description?.split("\n");
     if (!rawSeries) return;
+    rawSeries.pop();
     rawSeries.shift();
     let series: Series[] = rawSeries.map(s => { return { series: s.split("]")[1].split("**")[0].trim() } });
     let findOutput = await bridge.findSeries(series);

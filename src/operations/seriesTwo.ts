@@ -13,7 +13,6 @@ export async function run(message: Message) {
     let url = message.attachments.first()?.url;
     if (!url) return;
     let ocrOutput: Character[] = await bridge.ocrSeries(url);
-    console.log(ocrOutput);
     let format = fetchFormat(config.format.data, ocrOutput);
 
     message.reply(format).catch(_ => null);
