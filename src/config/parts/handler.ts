@@ -94,13 +94,14 @@ export async function handleOptionChange(interaction: ButtonInteraction, isServe
     let currentSuboptionIndex = currentOption.options.findIndex(subopt => subopt.name == config.data);
     let operation = "$set";
     if (currentSuboptionIndex == currentOption.options.length - 1) {
-        if (!isServer) {
+        if ((!isServer) && (!config.serverDefault)) {
             operation = "$unset";
             currentSuboptionIndex = 0;
         } else {
             currentSuboptionIndex = -1;
         }
-    } else if (config.serverDefault && !isServer) currentSuboptionIndex = -1;
+    } // maybe else if (idk)
+    if (config.serverDefault && !isServer) currentSuboptionIndex = -1;
     await setData(isServer ? interaction.guildId! : interaction.user.id, `${type}.${option}`, currentOption.options[currentSuboptionIndex + 1].name, isServer, operation);
     interaction.message.edit(await configObjects[type](interaction.guildId!, interaction.user.id, isServer));
     interaction.deferUpdate();
