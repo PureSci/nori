@@ -69,6 +69,16 @@ const presets = {
             }
         ]
     },
+    fancy: {
+        prettyName: "Fancy",
+        description: "Too fancy :sob:",
+        format: (config: any) => {
+            return `\`1}\`🤍  ̗̀➛ \`{wl1}\` 🕸\`ɢ{gen1}\` ˚₊· ͟͟͞➳❥ ***{cardname1}***‧₊˚ *{cardseries1}*\n` +
+                `\`2}\`🎧  ̗̀➛ \`{wl2}\` 🕸\`ɢ{gen2}\` ˚₊· ͟͟͞➳❥ ***{cardname2}***‧₊˚ *{cardseries2}*\n` +
+                `\`3}\`🥀  ̗̀➛ \`{wl3}\` 🕸\`ɢ{gen3}\` ˚₊· ͟͟͞➳❥ ***{cardname3}***‧₊˚ *{cardseries3}*`
+        },
+        options: []
+    },
     custom: {
         prettyName: "Custom",
         description: "Advanced Config",
