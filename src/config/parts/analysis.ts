@@ -155,10 +155,32 @@ configObjects["analysis"] = async (guildId: string, userId: string, isServer: bo
                     })
                 ]
             }),
-            ...buttonOpts
+            ...buttonOpts,
+            new ActionRowBuilder<ButtonBuilder>({
+                components: [
+                    new ButtonBuilder({
+                        custom_id: `analysisTestAppearance_${userId}`,
+                        label: "Test Appearance",
+                        style: ButtonStyle.Primary,
+                    })
+                ]
+            })
         ]
     }
 }
+
+customInteractions.push({
+    filter: (interaction) => {
+        return interaction.customId.startsWith("analysisTestAppearance") && interaction.customId.split("_")[1] == interaction.user.id;
+    },
+    run: async (interaction) => {
+        const format = await getUserConfig("analysis.format", interaction.user.id, interaction.guildId);
+        interaction.reply({
+            content: fetchFormat(format.data, exampleCharData),
+            ephemeral: true
+        })
+    }
+});
 
 customInteractions.push({
     filter: (interaction) => {
