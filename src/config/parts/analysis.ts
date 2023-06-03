@@ -117,7 +117,7 @@ configObjects["analysis"] = async (guildId: string, userId: string, isServer: bo
     }[] = permOptions.concat(preset.options);
     let buttonOpts = getOptionComponentsComp(options, configPreset.data, userId, isServer, "configOptionChangeAnalysis");
     if (configPreset.data == "custom") buttonOpts[0].addComponents(new ButtonBuilder({
-        custom_id: "analysis_advancedFormat_" + userId,
+        custom_id: `analysis_advancedFormat_${userId}_${isServer}`,
         label: "Customize Format",
         style: ButtonStyle.Primary
     }));
@@ -190,7 +190,7 @@ customInteractions.push({
         // configOptionChangeaAnalysis_353623899184824330_user_standart_showNumbers
         // 0                           1                  2    3        4
         const data = interaction.customId.split("_");
-        const isServer = data[2] == "server";
+        const isServer = data[2] == "true";
         let options = permOptions.concat(presets[data[3] as keyof typeof presets].options).find(option => option.name == data[4])?.options!;
         let query = `analysis.presets.${data[3]}.${data[4]}`;
         const isTopData = data[4] == "enabled" || data[4] == "mention";

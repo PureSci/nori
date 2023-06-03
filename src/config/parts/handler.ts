@@ -66,7 +66,7 @@ export function getOptionComponentsComp(options: ConfigOption[], type: string, u
             row.addComponents(
                 new ButtonBuilder({
                     //          configOptionChange_userId_isServer_reminders_drop
-                    custom_id: `${customId ?? "configOptionChange"}_${userId}_${isServer ? "server" : "user"}_${type}_${options[i - 1].name}`,
+                    custom_id: `${customId ?? "configOptionChange"}_${userId}_${isServer}_${type}_${options[i - 1].name}`,
                     style: ButtonStyle.Primary,
                     label: `${i}`,
                 })
