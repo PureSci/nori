@@ -1,9 +1,8 @@
-import { Attachment, AttachmentBuilder, Collection, Message, SlashCommandBuilder } from "discord.js";
+import { Message } from "discord.js";
 import settings from "../../../settings.json" assert {type: "json"};
 import humanizeDuration from "humanize-duration";
 import { analysisCount, analysisStartTime, averageSpan, run as dropRun, lastAnalysisSpans } from "../../dropAnalysis.js";
 import { run as captchaRun } from "../../operations/captchaDrop.js";
-import { run as seriesOneRun } from "../../operations/seriesOne.js";
 import { run as seriesTwoRun } from "../../operations/seriesTwo.js";
 import { run as minigameRun } from "../../operations/minigame.js";
 import { saveReminders } from "../../utils/reminderHandler.js";

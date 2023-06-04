@@ -45,6 +45,9 @@ const serverConfigObject = {
             }
         }
     },
+    utils: {
+        deleteMessage: { type: Boolean, default: false },
+    },
     reminders: {
         drop: { type: Schema.Types.Mixed, default: true },
         grab: { type: Schema.Types.Mixed, default: false }

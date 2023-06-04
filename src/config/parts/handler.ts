@@ -1,33 +1,37 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuInteraction, parseEmoji } from "discord.js";
+import { APISelectMenuOption, ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuInteraction, parseEmoji } from "discord.js";
 
 import "./reminders.js";
 import "./analysis.js";
+import "./utils.js";
 
 import { ConfigOption, configObjects, configTypes } from "../configTypes.js";
-import { UserConfig, getUserConfig, setData } from "../../utils/databaseHandler.js";
+import { getUserConfig, setData } from "../../utils/databaseHandler.js";
 function defaultComponents(userId: string, isServer: boolean) {
+    let configOptions: APISelectMenuOption[] = [];
+    configTypes.forEach(configType => {
+        if (configType.serverOnly && !isServer) return;
+        configOptions.push({
+            label: configType.prettyName,
+            description: `Configs for ${configType.prettyName}`,
+            // @ts-ignore
+            emoji: parseEmoji(configType.emoji)!,
+            value: `configSelect_${configType.name}`
+        });
+    });
     return [
         new ActionRowBuilder<StringSelectMenuBuilder>({
             components: [
                 new StringSelectMenuBuilder({
                     custom_id: `configSelector_${userId}_${isServer}`,
                     // @ts-ignore
-                    options: configTypes.map(configType => {
-                        return {
-                            label: configType.prettyName,
-                            description: `Configs for ${configType.prettyName}`,
-                            // @ts-ignore
-                            emoji: parseEmoji(configType.emoji)!,
-                            value: `configSelect_${configType.name}`
-                        }
-                    })
+                    options: configOptions
                 })
             ]
         })
     ]
 }
 
-export function getConfigComponents(defaultOption: "reminders" | "analysis", userId: string, isServer: boolean = false) {
+export function getConfigComponents(defaultOption: "reminders" | "analysis" | "utils", userId: string, isServer: boolean = false) {
     let components = defaultComponents(userId, isServer);
     components[0] // ActionRowBuilder
         .components[0] // StringSelectMenuBuilder
@@ -46,7 +50,7 @@ export async function formatConfigComp(options: ConfigOption[], query: string, u
     return options.map((configOption, index) => {
         let config = configData[configOption.name];
         let option = configOption.options.find(option => option.name == config.data);
-        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer ? " <:server_default:1112107708812894240>" : ""}`;
+        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer ? " <:server_default:1112107708812894240>" : ""}${configOption.description ? `\n*${configOption.description}*` : ""}`;
     }).join("\n");
 }
 
@@ -114,7 +118,7 @@ function getConfigType(type: string) {
 function computeValues(num: number): [number, number] {
     let first: number = 1;
     let second: number = 2;
-
+    if (num == 1) second = 1;
     while (num > first * second) {
         second += 1;
         if (second > 5) {

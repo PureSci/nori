@@ -146,7 +146,7 @@ fn check_match(character: &String, card: &String, is_dot: &bool) -> bool {
         true
     } else {
         let mut diffs = 0;
-        let mut diff_chars: [char; 2] = ['.', '.'];
+        let mut diff_chars: [char; 2];
         let mut character_mut = character.to_owned();
         let mut card_mut = card.to_owned();
         let mut index = 0;

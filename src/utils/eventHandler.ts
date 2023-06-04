@@ -23,10 +23,10 @@ interface Command {
 export default async function (client: Client) {
     let operations = await initOperations("./src/operations/", "../operations/");
     let editOperations = await initOperations("./src/editOperations/", "../editOperations/");
-    let [commands, registerCommands] = await initCommands();
-
+    const [commands, registerCommands] = await initCommands();
+    const [contextMenuCommands, contextMenuRegisterCommands] = await initContextMenus();
     await rest.put(Routes.applicationCommands(client.user?.id as string), {
-        body: registerCommands
+        body: registerCommands.concat(contextMenuRegisterCommands)
     });
 
     client.on("messageCreate", message => {
@@ -79,6 +79,12 @@ export default async function (client: Client) {
             customModalInteractions.forEach(customModalInteraction => {
                 if (customModalInteraction.filter(interaction)) customModalInteraction.run(interaction);
             });
+        } else if (interaction.isContextMenuCommand()) {
+            contextMenuCommands.forEach((contextMenuCommand: any) => {
+                if (interaction.commandName == contextMenuCommand.register.name) {
+                    contextMenuCommand.run(interaction);
+                }
+            });
         }
     });
 }
@@ -113,4 +119,16 @@ async function initOperations(pathsrc: string, pathrel: string) {
             run: operation.run
         };
     }));
+}
+
+async function initContextMenus() {
+    const menuFiles = fs.readdirSync("./src/interactions/contextMenus");
+    let contextMenus: any = [];
+    let registerMenus: any = [];
+    for (const file of menuFiles) {
+        const contextMenu = await import("../interactions/contextMenus/" + file);
+        registerMenus.push(contextMenu.register.toJSON());
+        contextMenus.push(contextMenu);
+    }
+    return [contextMenus, registerMenus];
 }
