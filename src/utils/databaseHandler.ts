@@ -25,6 +25,7 @@ export const UserConfig = mongoose.model("userConfig", new Schema({
     reminders: {
         drop: Schema.Types.Mixed,
         grab: Schema.Types.Mixed,
+        raid: Schema.Types.Mixed
     }
 }));
 
@@ -50,7 +51,8 @@ const serverConfigObject = {
     },
     reminders: {
         drop: { type: Schema.Types.Mixed, default: true },
-        grab: { type: Schema.Types.Mixed, default: false }
+        grab: { type: Schema.Types.Mixed, default: false },
+        raid: { type: Schema.Types.Mixed, default: false }
     },
     serverDrops: {
         captcha: {

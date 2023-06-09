@@ -1,8 +1,8 @@
 import { ChannelType, Message } from "discord.js";
-import { getUserConfig } from "./databaseHandler.js";
+import { UserConfig, getUserConfig } from "./databaseHandler.js";
 import constants from "./Constants.js";
 import fs from "fs";
-import humanizeDuration from "humanize-duration";
+import * as schedule from 'node-schedule';
 import { client } from "../index.js";
 
 let reminderType: {
@@ -64,6 +64,11 @@ export function saveReminders() {
 }
 
 export function loadReminders() {
+    const rule = new schedule.RecurrenceRule();
+    rule.hour = [17, 19, 21, 23, 1, 3, 5, 7, 9, 11, 13, 15];
+    rule.minute = 23;
+    schedule.scheduleJob(rule, newRaid);
+    console.log('Raid Schedule Started');
     let file = fs.readFileSync("./reminders.json");
     if (!file) return;
     let data = JSON.parse(file.toString());
@@ -81,8 +86,8 @@ export function loadReminders() {
             if (!reminderConfig.data) return;
             try {
                 const isDm = reminderConfig.data == "dm";
-                let channel: any = client.channels.cache.get(reminder.channelId);
-                const user = client.users.cache.get(reminder.userId);
+                let channel: any = await client.channels.fetch(reminder.channelId);
+                const user = await client.users.fetch(reminder.userId);
                 if (!channel) {
                     if (isDm) {
                         user?.send(`${constants.REMINDER_EMOJI} <@${reminder.userId}> You can now **${reminder.type}**!  <#${reminder.channelId}>`).catch(_ => null)
@@ -90,7 +95,7 @@ export function loadReminders() {
                     return;
                 }
                 if (channel.isDMBased()) return;
-                let perms = client.guilds.cache.get(reminder.guildId)?.members.me?.permissionsIn(channel);
+                let perms = (await client.guilds.fetch(reminder.guildId))?.members.me?.permissionsIn(channel);
                 if (perms?.has("SendMessages") || isDm) {
                     if (isDm) channel = user;
                     let isDmMessage = isDm ? ` <#${reminder.channelId}>` : "";
@@ -106,5 +111,16 @@ export function loadReminders() {
             channelId: reminder.channelId,
             guildId: reminder.guildId
         };
+    });
+}
+
+async function newRaid() {
+    const users = await UserConfig.find({
+        "reminders.raid": "dm"
+    }, "_id").exec();
+    users.forEach(async user => {
+        client.users.send(user._id, {
+            content: "👹 New Raid started!"
+        }).catch(_ => null);
     });
 }

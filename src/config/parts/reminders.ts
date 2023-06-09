@@ -31,6 +31,16 @@ configTypes.push({
                 SubConfigOptionDM,
                 SubConfigOptionFALSE
             ]
+        },
+        {
+            name: "raid",
+            prettyName: "Raid",
+            options: [
+                SubConfigOptionDM,
+                SubConfigOptionFALSE
+            ],
+            userOnly: true,
+            description: "This option will make Nori dm you everytime a new guild raid begins, independent of whether you raided or not."
         }
     ]
 });

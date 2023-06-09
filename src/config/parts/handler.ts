@@ -48,9 +48,10 @@ export async function formatConfig(type: string, guildId: string, userId: string
 export async function formatConfigComp(options: ConfigOption[], query: string, userId: string, guildId: string, isServer: boolean, extraIndex?: number) {
     let configData: any = await getUserConfig(query, userId, guildId, isServer);
     return options.map((configOption, index) => {
+        if (isServer && configOption.userOnly) return ``;
         let config = configData[configOption.name];
         let option = configOption.options.find(option => option.name == config.data);
-        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer ? " <:server_default:1112107708812894240>" : ""}${configOption.description ? `\n*${configOption.description}*` : ""}`;
+        return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer && !configOption.userOnly ? ` <:server_default:1112107708812894240>` : ""}${configOption.description ? `\n*${configOption.description}*` : ""}`;
     }).join("\n");
 }
 
@@ -60,6 +61,7 @@ export function getOptionComponents(type: string, userId: string, isServer: bool
 }
 
 export function getOptionComponentsComp(options: ConfigOption[], type: string, userId: string, isServer: boolean, customId?: string) {
+    if (isServer) options = options.filter(x => !x.userOnly);
     if (options.length == 0) return [];
     const computed = computeValues(options.length);
     let components = [];
@@ -98,7 +100,7 @@ export async function handleOptionChange(interaction: ButtonInteraction, isServe
     let currentSuboptionIndex = currentOption.options.findIndex(subopt => subopt.name == config.data);
     let operation = "$set";
     if (currentSuboptionIndex == currentOption.options.length - 1) {
-        if ((!isServer) && (!config.serverDefault)) {
+        if ((!isServer) && (!config.serverDefault) && !currentOption.userOnly) {
             operation = "$unset";
             currentSuboptionIndex = 0;
         } else {

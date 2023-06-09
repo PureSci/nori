@@ -30,6 +30,7 @@ export interface ConfigOption {
     prettyName: string,
     options: SubConfigOption[],
     description?: string
+    userOnly?: boolean
 }
 
 export interface SubConfigOption {
