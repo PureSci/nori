@@ -23,7 +23,6 @@ pub enum CardsHandleType {
     UpdateCard(Character),
 }
 
-#[allow(unreachable_code)]
 pub async fn card_handler_loop(mut receiver: Receiver<CardsHandleType>, init_sender: Sender<bool>) {
     let db_url = std::env::var("MONGODB_URL").unwrap();
     let db = Client::with_options(ClientOptions::parse(db_url.clone()).await.unwrap())

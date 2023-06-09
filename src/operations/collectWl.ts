@@ -12,12 +12,17 @@ export function filter(message: Message) {
 
 export function run(message: Message) {
     if (message.embeds?.[0]?.description?.includes("Card ID:")) {
-        let rows = message.embeds[0].description?.split("\n").filter(x => ["**`Wishlisted", "**Series", "**Name"].some(y => x.startsWith(y)))!;
+        let rows = message.embeds[0].description?.split("\n").filter(x => x.trim().length !== 0);
         if (!rows) return;
-        bridge.updateCard({
+        bridge.updateCharacterData({
+            series: rows[0].split("**")[2].trim(),
+            name: message.embeds[0].title!,
+            category: rows[1].split("**")[2].trim(),
             wl: parseInt(rows[2].split("➜** `")[1].split("`")[0].trim()),
-            name: rows[1].split(": ** ")[1].trim(),
-            series: rows[0].split(": ** ")[1].trim()
+            generated: parseInt(rows[3].split("➜** `")[1].split("`")[0].trim()),
+            burned: parseInt(rows[4].split("➜** `")[1].split("`")[0].trim()),
+            threed: parseInt(rows[5].split("➜** `")[1].split("`")[0].trim()),
+            id: rows[rows.length - 1].split("** `")[1].split("`")[0].trim()
         });
     } else if (message.embeds?.[0]?.description?.includes("Cards Collected:")) {
         let rows = message.embeds[0].fields[0].value.split("\n");

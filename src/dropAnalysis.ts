@@ -18,6 +18,10 @@ export async function run(message: Message, url?: string) {
     const dropper = message.content?.split("<@")?.[1]?.split(">")?.[0];
     const analysisConfig = await getUserConfig("analysis", dropper, message.guildId);
 
+    let reminderConfig = await getUserConfig("reminders.drop", dropper, message.guildId);
+    if (reminderConfig.data && !message.content.includes("Your extra drop is being used.")) {
+        reminderHandler(message, dropper, "drop");
+    }
     if (!analysisConfig.enabled.data) return;
 
     let cardData: Character[];
@@ -42,11 +46,6 @@ export async function run(message: Message, url?: string) {
     }
 
     handleMessage(message, cardData, analysisConfig, dropper);
-
-    let reminderConfig = await getUserConfig("reminders.drop", dropper, message.guildId);
-    if (reminderConfig.data && !message.content.includes("Your extra drop is being used.")) {
-        reminderHandler(message, dropper, "drop");
-    }
 }
 
 function handleMessage(message: Message, ocrOutput: Character[], analysisConfig: any, dropper: string) {
