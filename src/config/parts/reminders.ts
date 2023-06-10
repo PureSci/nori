@@ -12,7 +12,6 @@ configTypes.push({
     name: "reminders",
     prettyName: "Reminders",
     emoji: "<:reminder_set:1061639553154285669> ",
-    serverOnly: false,
     options: [
         {
             name: "drop",

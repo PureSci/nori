@@ -26,7 +26,7 @@ export function run(message: Message) {
         });
     } else if (message.embeds?.[0]?.description?.includes("Cards Collected:")) {
         let rows = message.embeds[0].fields[0].value.split("\n");
-        let series = message.embeds[0].description.split("__**")[1].split("**__")[0].trim();
+        let series = message.embeds[0].title!;
         rows?.forEach(row => {
             bridge.updateCard({
                 wl: parseInt(row.split("❤️ `")[1].split("`")[0].trim()),

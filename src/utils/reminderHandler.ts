@@ -2,7 +2,6 @@ import { ChannelType, Message } from "discord.js";
 import { UserConfig, getUserConfig } from "./databaseHandler.js";
 import constants from "./Constants.js";
 import fs from "fs";
-import * as schedule from 'node-schedule';
 import { client } from "../index.js";
 
 let reminderType: {
@@ -64,11 +63,6 @@ export function saveReminders() {
 }
 
 export function loadReminders() {
-    const rule = new schedule.RecurrenceRule();
-    rule.hour = [17, 19, 21, 23, 1, 3, 5, 7, 9, 11, 13, 15];
-    rule.minute = 23;
-    schedule.scheduleJob(rule, newRaid);
-    console.log('Raid Schedule Started');
     let file = fs.readFileSync("./reminders.json");
     if (!file) return;
     let data = JSON.parse(file.toString());
@@ -111,16 +105,5 @@ export function loadReminders() {
             channelId: reminder.channelId,
             guildId: reminder.guildId
         };
-    });
-}
-
-async function newRaid() {
-    const users = await UserConfig.find({
-        "reminders.raid": "dm"
-    }, "_id").exec();
-    users.forEach(async user => {
-        client.users.send(user._id, {
-            content: "👹 New Raid started!"
-        }).catch(_ => null);
     });
 }

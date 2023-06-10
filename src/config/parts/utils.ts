@@ -7,7 +7,6 @@ configTypes.push({
     name: "utils",
     prettyName: "Utils",
     emoji: "💡",
-    serverOnly: true,
     options: [
         {
             name: "deleteMessage",
@@ -16,7 +15,17 @@ configTypes.push({
                 SubConfigOptionTRUE,
                 SubConfigOptionFALSE
             ],
-            description: "Enabling this option allows the users to delete their Sofi messages using Discord's new apps function. Nori needs the `ManageMessages` permission for this feature."
+            description: "Enabling this option allows the users to delete their Sofi messages using Discord's new apps function. Nori needs the `ManageMessages` permission for this feature.",
+            serverOnly: true
+        },
+        {
+            name: "glowIndicators",
+            prettyName: "Glow Indicators",
+            options: [
+                SubConfigOptionTRUE,
+                SubConfigOptionFALSE
+            ],
+            description: "Shows information about glows when viewing cards with glow / glows / glowing cards"
         }
     ]
 });

@@ -21,7 +21,6 @@ export interface ConfigType {
     name: string,
     prettyName: string,
     emoji: string,
-    serverOnly: boolean,
     options: ConfigOption[]
 }
 
@@ -30,7 +29,8 @@ export interface ConfigOption {
     prettyName: string,
     options: SubConfigOption[],
     description?: string
-    userOnly?: boolean
+    userOnly?: boolean,
+    serverOnly?: boolean
 }
 
 export interface SubConfigOption {

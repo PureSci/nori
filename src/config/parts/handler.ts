@@ -9,7 +9,6 @@ import { getUserConfig, setData } from "../../utils/databaseHandler.js";
 function defaultComponents(userId: string, isServer: boolean) {
     let configOptions: APISelectMenuOption[] = [];
     configTypes.forEach(configType => {
-        if (configType.serverOnly && !isServer) return;
         configOptions.push({
             label: configType.prettyName,
             description: `Configs for ${configType.prettyName}`,
@@ -47,8 +46,9 @@ export async function formatConfig(type: string, guildId: string, userId: string
 
 export async function formatConfigComp(options: ConfigOption[], query: string, userId: string, guildId: string, isServer: boolean, extraIndex?: number) {
     let configData: any = await getUserConfig(query, userId, guildId, isServer);
+    if (isServer) options = options.filter(configOption => !configOption.userOnly);
+    else options = options.filter(configOptions => !configOptions.serverOnly);
     return options.map((configOption, index) => {
-        if (isServer && configOption.userOnly) return ``;
         let config = configData[configOption.name];
         let option = configOption.options.find(option => option.name == config.data);
         return `\`${index + 1 + (extraIndex ?? 0)}]\` ${option?.emoji} • \`${configOption.prettyName}\` • **${option?.text}**${config.serverDefault && !isServer && !configOption.userOnly ? ` <:server_default:1112107708812894240>` : ""}${configOption.description ? `\n*${configOption.description}*` : ""}`;
@@ -62,6 +62,7 @@ export function getOptionComponents(type: string, userId: string, isServer: bool
 
 export function getOptionComponentsComp(options: ConfigOption[], type: string, userId: string, isServer: boolean, customId?: string) {
     if (isServer) options = options.filter(x => !x.userOnly);
+    else options = options.filter(x => !x.serverOnly);
     if (options.length == 0) return [];
     const computed = computeValues(options.length);
     let components = [];

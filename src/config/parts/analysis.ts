@@ -10,7 +10,6 @@ configTypes.push({
     name: "analysis",
     prettyName: "Drop Analysis",
     emoji: "🔍",
-    serverOnly: false,
     options: []
 });
 
