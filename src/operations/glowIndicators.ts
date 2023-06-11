@@ -7,7 +7,7 @@ import Constants from "../utils/Constants.js";
 const glowIndicatorEmoji = parseEmoji(Constants.GLOWINFO_EMOJI)!;
 
 export function filter(message: Message): boolean {
-    return (message.embeds?.[0]?.title == "SOFI: GLOW" || message.embeds?.[0]?.description?.split("\n")?.pop()?.startsWith("**Owned By:")) ?? false;
+    return message.embeds?.[0]?.title == "SOFI: GLOW" ?? false;
 }
 
 export async function run(message: Message) {
