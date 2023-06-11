@@ -14,7 +14,6 @@ let currentRaidCooldown: {
 export async function run(message: Message) {
     let endsTimestamp = parseInt(message.embeds[0].title!.split("<t:")[1].split(":R>")[0]);
     if (!currentRaidCooldown) {
-        console.log(((endsTimestamp + 20) * 1000) - Date.now());
         setTout(endsTimestamp);
     } else {
         if (currentRaidCooldown.duration == endsTimestamp) return;

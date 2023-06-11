@@ -7,7 +7,7 @@ export function filter(message: Message): boolean {
 }
 
 export async function run(message: Message) {
-    if (message.components[0].components[0].disabled) return;
+    if (message.components[0].components[0].disabled || message.embeds[0].description == "Cancelled") return;
     let referenceMessage = await message.fetchReference();
     let config;
     if (referenceMessage) config = await getUserConfig("utils.glowIndicators", referenceMessage.author.id, message.guildId);
