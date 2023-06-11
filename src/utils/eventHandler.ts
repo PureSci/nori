@@ -49,10 +49,10 @@ export default async function (client: Client) {
         }
     });
 
-    client.on("messageUpdate", (oldMessage, newMessage) => {
+    client.on("messageUpdate", (_, newMessage) => {
         if (!newMessage.guildId) return;
         if (newMessage.author && newMessage.author.id == Constants.SOFI_ID) {
-            editOperations.forEach(async operation => {
+            editOperations.forEach(operation => {
                 if (operation.filter(newMessage)) operation.run(newMessage);
             });
         }

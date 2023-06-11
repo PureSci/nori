@@ -6,7 +6,7 @@ import settings from "../settings.json" assert {type: "json"};
 dotenv.config();
 
 export const client = new Client({
-    intents: ["Guilds", "GuildMessages", "MessageContent"]
+    intents: ["Guilds", "GuildMessages", "MessageContent", "GuildMessageReactions"]
 });
 
 client.once("ready", () => {

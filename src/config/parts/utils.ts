@@ -23,6 +23,11 @@ configTypes.push({
             prettyName: "Glow Indicators",
             options: [
                 SubConfigOptionTRUE,
+                {
+                    emoji: Constants.ON_EMOJI,
+                    name: "auto",
+                    text: "Enabled AUTO",
+                },
                 SubConfigOptionFALSE
             ],
             description: "Shows information about glows when viewing cards with glow / glows / glowing cards"

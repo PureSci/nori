@@ -28,7 +28,7 @@ export const UserConfig = mongoose.model("userConfig", new Schema({
         raid: Schema.Types.Mixed
     },
     utils: {
-        glowIndicators: Boolean
+        glowIndicators: Schema.Types.Mixed
     }
 }));
 
@@ -51,7 +51,7 @@ const serverConfigObject = {
     },
     utils: {
         deleteMessage: { type: Boolean, default: false },
-        glowIndicators: { type: Boolean, default: true }
+        glowIndicators: { type: Schema.Types.Mixed, default: true }
     },
     reminders: {
         drop: { type: Schema.Types.Mixed, default: true },

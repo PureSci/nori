@@ -1,7 +1,10 @@
-import { AttachmentBuilder, Message } from "discord.js";
+import { AttachmentBuilder, Message, PartialMessage, parseEmoji } from "discord.js";
 import { getServerConfig, getUserConfig } from "../utils/databaseHandler.js";
 import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
+import Constants from "../utils/Constants.js";
+
+const glowIndicatorEmoji = parseEmoji(Constants.GLOWINFO_EMOJI)!;
 
 export function filter(message: Message): boolean {
     return (message.embeds?.[0]?.title == "SOFI: GLOW" || message.embeds?.[0]?.description?.split("\n")?.pop()?.startsWith("**Owned By:")) ?? false;
@@ -13,8 +16,37 @@ export async function run(message: Message) {
     if (referenceMessage) config = await getUserConfig("utils.glowIndicators", referenceMessage.author.id, message.guildId);
     else config = await getServerConfig("utils.glowIndicators", message.guildId);
     if (!config.data) return;
+    if (config.data == "auto") {
+        handleGlowIndicator(message, referenceMessage.author.id);
+    } else {
+        // @ts-ignore
+        message.react(glowIndicatorEmoji);
+        awaitGlowIndicatorEmoji(message, referenceMessage.author.id);
+    }
+}
+
+export function awaitGlowIndicatorEmoji(message: Message, userId: string) {
+    message.awaitReactions({
+        filter: (reaction, user) => reaction.emoji.id == glowIndicatorEmoji.id && user.id == userId,
+        max: 1,
+        time: 60_000,
+        errors: ["time"]
+    }).then(_ => {
+        handleGlowIndicator(message, userId);
+    }).catch(_ => null);
+}
+
+export async function handleGlowIndicator(message: Message | PartialMessage, userId: string) {
     const rows = message.embeds?.[0]?.description?.split("\n");
-    if (rows?.find(x => x.startsWith(`\`Type:`))?.includes("Super")) {
+    if (message.embeds[0].title == "SOFI: SUPER GLOW") {
+        message.reply(
+            await superGlow(
+                userId, // owner Id
+                message.embeds[0].description?.split("Code: `#")[1].split("`")[0]!, // viewCode
+                message.embeds[0].color!
+            )
+        );
+    } else if (rows?.find(x => x.startsWith(`\`Type:`))?.includes("Super")) {
         message.reply(
             await superGlow(
                 rows[4].split("<@")[1].split(">")[0], // owner Id
@@ -22,8 +54,7 @@ export async function run(message: Message) {
                 message.embeds[0].color!
             )
         );
-    }
-    else {
+    } else if (message.embeds?.[0]?.footer?.text.startsWith("Glow:") || message.embeds[0].title == "SOFI: GLOW") {
         const color = message.embeds[0].hexColor;
         if (color == "#ec91c8" || !color) return;
         message.reply(normalGlow(color, message.embeds[0].color!));
